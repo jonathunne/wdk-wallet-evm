@@ -6,7 +6,8 @@
   "type": "module",
   "types": "index.d.ts",
   "scripts": {
-    "lint": "standard --fix"
+    "lint": "standard",
+    "lint:fix": "standard --fix"
   },
   "dependencies": {
     "ethers": "6.13.5"
