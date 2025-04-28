@@ -13,4 +13,4 @@
 // limitations under the License.
 'use strict'
 
-export { default } from './src/wallet-manager-evm.js' 
+export { default } from './src/wallet-manager-evm.js'

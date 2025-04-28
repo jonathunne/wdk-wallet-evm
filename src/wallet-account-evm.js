@@ -24,7 +24,7 @@ export default class WalletAccountEvm {
 
   /**
    * The derivation path's index of this account.
-   * 
+   *
    * @type {number}
    */
   get index () {
@@ -33,7 +33,7 @@ export default class WalletAccountEvm {
 
   /**
    * The derivation path of this account (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
-   * 
+   *
    * @type {number}
    */
   get path () {
@@ -42,7 +42,7 @@ export default class WalletAccountEvm {
 
   /**
    * The account's address.
-   * 
+   *
    * @type {string}
    */
   get address () {
@@ -57,7 +57,7 @@ export default class WalletAccountEvm {
 
   /**
    * The account's key pair.
-   * 
+   *
    * @type {KeyPair}
    */
   get keyPair () {
@@ -69,7 +69,7 @@ export default class WalletAccountEvm {
 
   /**
    * Signs a message.
-   * 
+   *
    * @param {string} message - The message to sign.
    * @returns {Promise<string>} The message's signature.
    */
@@ -79,7 +79,7 @@ export default class WalletAccountEvm {
 
   /**
    * Verifies a message's signature.
-   * 
+   *
    * @param {string} message - The original message.
    * @param {string} signature - The signature to verify.
    * @returns {Promise<boolean>} True if the signature is valid.
@@ -87,7 +87,7 @@ export default class WalletAccountEvm {
   async verify (message, signature) {
     const address = await verifyMessage(message, signature)
 
-    return address.toLowerCase() == this.#account.address.toLowerCase()
+    return address.toLowerCase() === this.#account.address.toLowerCase()
   }
 
   /**
@@ -96,10 +96,10 @@ export default class WalletAccountEvm {
    * @property {number} value - The amount of native tokens to send to the recipient.
    * @property {string} [data] - The transaction's data in hex format.
    */
-  
+
   /**
    * Sends a transaction with arbitrary data.
-   * 
+   *
    * @param {Transaction} tx - The transaction to send.
    * @returns {Promise<string>} The transaction's hash.
    */
