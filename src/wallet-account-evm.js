@@ -13,7 +13,12 @@
 // limitations under the License.
 'use strict'
 
-import { verifyMessage } from 'ethers'
+import { verifyMessage, Contract } from 'ethers'
+
+const ERC_20_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)'
+]
 
 /**
  * @typedef {Object} KeyPair
@@ -111,5 +116,36 @@ export default class WalletAccountEvm {
     const { hash } = await this.#account.sendTransaction(tx)
 
     return hash
+  }
+
+  /**
+   * Returns the account's native token balance (e.g., ether balance for ethereum in wei).
+   *
+   * @returns {Promise<number>} The native token balance.
+   */
+  async getBalance () {
+    if (!this.#account.provider) {
+      throw new Error('The wallet must be connected to a provider to retrieve balances.')
+    }
+
+    const balance = await this.#account.provider.getBalance(this.address)
+    return Number(balance)
+  }
+
+  /**
+   * Returns the account balance for a specific token in its base unit (e.g., 1 USDT will return 1_000_000).
+   *
+   * @param {string} tokenAddress - The smart contract address of the token.
+   * @returns {Promise<number>} The token balance.
+   */
+  async getTokenBalance (tokenAddress) {
+    if (!this.#account.provider) {
+      throw new Error('The wallet must be connected to a provider to retrieve token balances.')
+    }
+
+    const tokenContract = new Contract(tokenAddress, ERC_20_ABI, this.#account.provider)
+    const rawBalance = await tokenContract.balanceOf(this.address)
+
+    return Number(rawBalance)
   }
 }
