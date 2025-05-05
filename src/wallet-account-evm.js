@@ -15,6 +15,19 @@
 
 import { verifyMessage } from 'ethers'
 
+/**
+ * @typedef {Object} KeyPair
+ * @property {string} publicKey - The public key.
+ * @property {string} privateKey - The private key.
+ */
+
+/**
+ * @typedef {Object} Transaction
+ * @property {string} to - The transaction's recipient.
+ * @property {number} value - The amount of native tokens to send to the recipient.
+ * @property {string} [data] - The transaction's data in hex format.
+ */
+
 export default class WalletAccountEvm {
   #account
 
@@ -50,12 +63,6 @@ export default class WalletAccountEvm {
   }
 
   /**
-   * @typedef {Object} KeyPair
-   * @property {string} publicKey - The public key.
-   * @property {string} privateKey - The private key.
-   */
-
-  /**
    * The account's key pair.
    *
    * @type {KeyPair}
@@ -89,13 +96,6 @@ export default class WalletAccountEvm {
 
     return address.toLowerCase() === this.#account.address.toLowerCase()
   }
-
-  /**
-   * @typedef {Object} Transaction
-   * @property {string} to - The transaction's recipient.
-   * @property {number} value - The amount of native tokens to send to the recipient.
-   * @property {string} [data] - The transaction's data in hex format.
-   */
 
   /**
    * Sends a transaction with arbitrary data.
