@@ -14,7 +14,11 @@
 
 'use strict'
 
-import { Contract, HDNodeWallet, JsonRpcProvider, Mnemonic, verifyMessage } from 'ethers'
+import { BrowserProvider, Contract, HDNodeWallet, JsonRpcProvider, Mnemonic, verifyMessage } from 'ethers'
+
+/**
+ * @typedef {import('ethers').Eip1193Provider} Eip1193Provider
+ */
 
 /**
  * @typedef {Object} KeyPair
@@ -35,7 +39,7 @@ import { Contract, HDNodeWallet, JsonRpcProvider, Mnemonic, verifyMessage } from
 
 /**
  * @typedef {Object} EvmWalletConfig
- * @property {string} [rpcUrl] - The rpc url of the provider.
+ * @property {string | Eip1193Provider} [rpcUrl] - The url of the rpc provider, or an instance of a class that implements eip-1193.
  */
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
@@ -62,7 +66,9 @@ export default class WalletAccountEvm {
     const { rpcUrl } = config
 
     if (rpcUrl) {
-      const provider = new JsonRpcProvider(rpcUrl)
+      const provider = typeof rpcUrl === 'string'
+        ? new JsonRpcProvider(rpcUrl)
+        : new BrowserProvider(rpcUrl)
 
       this.#account = this.#account.connect(provider)
     }
@@ -158,7 +164,7 @@ export default class WalletAccountEvm {
     }
 
     const gasLimit = await this.#account.provider.estimateGas(tx)
-    
+
     const { maxFeePerGas } = await this.#account.provider.getFeeData()
 
     return Number(gasLimit * maxFeePerGas)
@@ -193,7 +199,7 @@ export default class WalletAccountEvm {
     const abi = ['function balanceOf(address owner) view returns (uint256)']
     const token = new Contract(tokenAddress, abi, this.#account.provider)
     const balance = await token.balanceOf(await this.getAddress())
-    
+
     return Number(balance)
   }
 }

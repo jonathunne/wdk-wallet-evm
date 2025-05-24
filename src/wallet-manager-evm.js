@@ -14,17 +14,18 @@
 
 'use strict'
 
-import { HDNodeWallet, Mnemonic, JsonRpcProvider } from 'ethers'
+import { BrowserProvider, HDNodeWallet, JsonRpcProvider, Mnemonic } from 'ethers'
 
 import WalletAccountEvm from './wallet-account-evm.js'
 
-const FEE_RATE_NORMAL_MULTIPLIER = 1.1,
-      FEE_RATE_FAST_MULTIPLIER = 2.0
+const FEE_RATE_NORMAL_MULTIPLIER = 1.1
+const FEE_RATE_FAST_MULTIPLIER = 2.0
 
 /** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
 
 export default class WalletManagerEvm {
   #seedPhrase
+  #config
   #provider
 
   /**
@@ -40,10 +41,14 @@ export default class WalletManagerEvm {
 
     this.#seedPhrase = seedPhrase
 
+    this.#config = config
+
     const { rpcUrl } = config
 
     if (rpcUrl) {
-      this.#provider = new JsonRpcProvider(rpcUrl)
+      this.#provider = typeof rpcUrl === 'string'
+        ? new JsonRpcProvider(rpcUrl)
+        : new BrowserProvider(rpcUrl)
     }
   }
 
@@ -100,11 +105,7 @@ export default class WalletManagerEvm {
    * @returns {Promise<WalletAccountEvm>} The account.
    */
   async getAccountByPath (path) {
-    const { url } = this.#provider._getConnection()
-
-    return new WalletAccountEvm(this.#seedPhrase, path, {
-      rpcUrl: url
-    })
+    return new WalletAccountEvm(this.#seedPhrase, path, this.#config)
   }
 
   /**
@@ -118,7 +119,7 @@ export default class WalletManagerEvm {
     }
 
     const feeData = await this.#provider.getFeeData()
-    
+
     const maxFeePerGas = Number(feeData.maxFeePerGas)
 
     return {

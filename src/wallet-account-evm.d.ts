@@ -75,6 +75,7 @@ export default class WalletAccountEvm {
     getTokenBalance(tokenAddress: string): Promise<number>;
     #private;
 }
+export type Eip1193Provider = import('ethers').Eip1193Provider;
 export type KeyPair = {
     /**
      * - The public key.
@@ -117,7 +118,7 @@ export type EvmTransaction = {
 };
 export type EvmWalletConfig = {
     /**
-     * - The rpc url of the provider.
+     * - The url of the rpc provider, or an instance of a class that implements eip-1193.
      */
-    rpcUrl?: string;
+    rpcUrl?: string | Eip1193Provider;
 };
