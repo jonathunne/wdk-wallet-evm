@@ -27,20 +27,9 @@ export default class MemorySafeSigningKey extends SigningKey {
   #privateKeyBuffer
 
   constructor (privateKeyBuffer) {
-    if (!(privateKeyBuffer instanceof Uint8Array)) {
-      throw new Error('The private key must be a uint8 array.')
-    }
-    if (privateKeyBuffer.length !== 32) {
-      throw new Error('The private key must be 32 bytes long.')
-    }
-
     super(NULL)
 
     this.#privateKeyBuffer = privateKeyBuffer
-  }
-
-  get privateKey () {
-    return NULL
   }
 
   get publicKey () {
@@ -56,7 +45,7 @@ export default class MemorySafeSigningKey extends SigningKey {
   }
 
   get publicKeyBuffer () {
-    return secp256k1.getPublicKey(this.#privateKeyBuffer, false)
+    return secp256k1.getPublicKey(this.#privateKeyBuffer, true)
   }
 
   sign (digest) {
@@ -71,11 +60,6 @@ export default class MemorySafeSigningKey extends SigningKey {
       s: toBeHex(sig.s, 32),
       v: (sig.recovery ? 0x1c : 0x1b)
     })
-  }
-
-  computeSharedSecret (other) {
-    const pubKey = SigningKey.computePublicKey(other);
-    return hexlify(secp256k1.getSharedSecret(this.#privateKeyBuffer, getBytes(pubKey), false));
   }
 
   dispose () {

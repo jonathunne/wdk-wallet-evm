@@ -1,214 +1,280 @@
 import hre from 'hardhat'
-import { createHmac } from 'crypto'
-import { isAddress, HDNodeWallet, JsonRpcProvider, ContractFactory, parseUnits, BrowserProvider } from 'ethers';
-import * as secp256k1 from '@noble/secp256k1'
 
-import WalletAccountEvm from '../src/wallet-account-evm.js'
-import WalletManagerEvm from '../src/wallet-manager-evm.js'
+import { ContractFactory } from 'ethers'
 
-import MyToken from './abis/MyToken.json' with { type: "json" }
-import { afterEach } from '@jest/globals';
+import * as bip39 from 'bip39'
 
-const SEED_PHRASE = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+import { afterEach, beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
+
+import { WalletAccountEvm } from '../index.js'
+
+import TestToken from './abis/TestToken.json'
+
+const SEED_PHRASE = 'cook voyage document eight skate token alien guide drink uncle term abuse'
+
+const INVALID_SEED_PHRASE = 'invalid seed phrase'
+
+const SEED = bip39.mnemonicToSeedSync(SEED_PHRASE)
+
+const ACCOUNT = {
+  index: 0,
+  path: "m/44'/60'/0'/0/0",
+  address: '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  keyPair: {
+    privateKey: '260905feebf1ec684f36f1599128b85f3a26c2b817f2065a2fc278398449c41f',
+    publicKey: '036c082582225926b9356d95b91a4acffa3511b7cc2a14ef5338c090ea2cc3d0aa'
+  }
+}
+
+async function giveEthersTo (recipient, value) {
+  const [signer] = await hre.ethers.getSigners()
+
+  const transaction = await signer.sendTransaction({
+    to: recipient,
+    value
+  })
+
+  await transaction.wait()
+}
+
+async function giveTestTokensTo (recipient, value) {
+  const transaction = await testToken.transfer(
+    recipient,
+    value
+  )
+
+  await transaction.wait()
+}
+
+let testToken
+
+beforeAll(async () => {
+  const [signer] = await hre.ethers.getSigners()
+
+  const factory = new ContractFactory(TestToken.abi, TestToken.bytecode, signer)
+
+  testToken = await factory.deploy()
+
+  const transaction = await testToken.deploymentTransaction()
+
+  await transaction.wait()
+})
 
 describe('WalletAccountEvm', () => {
   let account
-  let myTokenAddress
-
-  beforeAll(async () => {
-    secp256k1.etc.hmacSha256Sync = (key, ...messages) => {
-      const hmac = createHmac('sha256', key)
-      messages.forEach(msg => hmac.update(msg))
-      return hmac.digest()
-    }
-
-    const hdNode = HDNodeWallet.fromPhrase(SEED_PHRASE);
-    const provider = new BrowserProvider(hre.network.provider)
-
-    const wallet = hdNode.connect(provider)
-
-    const factory = new ContractFactory(MyToken.abi, MyToken.bytecode, wallet);
-
-    const initialSupply = parseUnits("1000000", 18);
-
-    const contract = await factory.deploy();
-    await contract.deploymentTransaction().wait();
-
-    console.log("ERC20 Token deployed at:", contract.target);
-    myTokenAddress = contract.target;
-  })
 
   beforeEach(async () => {
-    account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", { provider: hre.network.provider })
+    account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
+      provider: hre.network.provider
+    })
   })
 
   afterEach(() => {
     account.dispose()
   })
 
-  test('shouwld throw if seed phrase is invalid', () => {
-    expect(() => {
-      new WalletAccountEvm('invalid seed phrase', "0'/0/0")
-    }).toThrow()
-  })
+  describe('constructor', () => {
+    test('should successfully initialize an account for the given seed phrase and path', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-  describe('index getter', () => {
-    test('returns the correct index', () => {
-      expect(account.index).toBe(0)
-    })
-  })
+      expect(account.index).toBe(ACCOUNT.index)
 
-  describe('path getter', () => {
-    test('returns the correct path', () => {
-      expect(account.path).toBe("m/44'/60'/0'/0/0")
-    })
-  })
+      expect(account.path).toBe(ACCOUNT.path)
 
-  describe('keyPair getter', () => {
-    test('returns the correct key pair', () => {
       expect(account.keyPair).toEqual({
-        privateKey: expect.any(Uint8Array),
-        publicKey: expect.any(Uint8Array)
+        privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
+        publicKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.publicKey, 'hex'))
       })
     })
+
+    test('should successfully initialize an account for the given seed and path', async () => {
+      const account = new WalletAccountEvm(SEED, "0'/0/0")
+
+      expect(account.index).toBe(ACCOUNT.index)
+
+      expect(account.path).toBe(ACCOUNT.path)
+
+      expect(account.keyPair).toEqual({
+        privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
+        publicKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.publicKey, 'hex'))
+      })
+    })
+
+    test('should throw if the seed phrase is invalid', () => {
+      // eslint-disable-next-line no-new
+      expect(() => { new WalletAccountEvm(INVALID_SEED_PHRASE, "0'/0/0") })
+        .toThrow('The seed phrase is invalid.')
+    })
+
+    test('should throw if the path is invalid', () => {
+      // eslint-disable-next-line no-new
+      expect(() => { new WalletAccountEvm(SEED_PHRASE, "a'/b/c") })
+        .toThrow('invalid path component')
+    })
   })
 
-  describe('getAddress method', () => {
-    test('returns the address', async () => {
+  describe('getAddress', () => {
+    test('should return the correct address', async () => {
       const address = await account.getAddress()
 
-      expect(isAddress(address)).toBe(true)
-      expect(typeof address).toBe('string')
+      expect(address).toBe(ACCOUNT.address)
     })
   })
 
+  describe('sign', () => {
+    const MESSAGE = 'Dummy message to sign.'
 
-  describe('sign method', () => {
-    test('produces a unique signature for different messages', async () => {
-      const msg1 = 'First message'
-      const msg2 = 'Second message'
+    const EXPECTED_SIGNATURE = '0xd130f94c52bf393206267278ac0b6009e14f11712578e5c1f7afe4a12685c5b96a77a0832692d96fc51f4bd403839572c55042ecbcc92d215879c5c8bb5778c51c'
 
-      const sig1 = await account.sign(msg1)
-      const sig2 = await account.sign(msg2)
+    test('should return the correct signature', async () => {
+      const signature = await account.sign(MESSAGE)
 
-      expect(sig1).not.toBe(sig2)
-      expect(sig1).toMatch(/^0x[a-fA-F0-9]+$/)
-      expect(sig2).toMatch(/^0x[a-fA-F0-9]+$/)
-    })
-
-    test('produces the same signature for the same message and same key', async () => {
-      const message = 'Message to sign'
-      const sig1 = await account.sign(message)
-      const sig2 = await account.sign(message)
-
-      expect(sig1).toBe(sig2)
+      expect(signature).toBe(EXPECTED_SIGNATURE)
     })
   })
 
-  describe('verify method', () => {
-    test('returns false for tampered message', async () => {
-      const original = 'Original message'
-      const altered = 'Original message with change'
+  describe('verify', () => {
+    const MESSAGE = 'Dummy message to sign.'
 
-      const signature = await account.sign(original)
+    const SIGNATURE = '0xd130f94c52bf393206267278ac0b6009e14f11712578e5c1f7afe4a12685c5b96a77a0832692d96fc51f4bd403839572c55042ecbcc92d215879c5c8bb5778c51c'
 
-      const isValid = await account.verify(altered, signature)
+    test('should return true for a valid signature', async () => {
+      const result = await account.verify(MESSAGE, SIGNATURE)
 
-      expect(isValid).toBe(false)
+      expect(result).toBe(true)
     })
 
-    test('returns false for invalid signature', async () => {
-      const message = 'Message to check'
-      const fakeSig = '0xc8a0eac95516c7396935e903fb35bcf234c8e1df13f7126ad60fdaf0b5d3c6210a4199d49d10271aed578db911a5c2c40ff4329604f71bcd62b39324e8cc62df1b'
+    test('should return false for an invalid signature', async () => {
+      const result = await account.verify('Another message.', SIGNATURE)
 
-      const isValid = await account.verify(message, fakeSig)
-
-      expect(isValid).toBe(false)
+      expect(result).toBe(false)
     })
 
     test('throws on malformed signature input', async () => {
-      const message = 'Test message'
-      const malformedSignature = 'bad-signature'
-
-      await expect(account.verify(message, malformedSignature)).rejects.toThrow()
+      await expect(account.verify(MESSAGE, 'A bad signature'))
+        .rejects.toThrow('invalid BytesLike value')
     })
   })
 
   describe('sendTransaction method', () => {
-    test('sends a transaction and returns the hash', async () => {
-      const tx = {
-        to: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        value: 1_000
-      }
+    const TRANSACTION = {
+      to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+      value: 1_000
+    }
 
-      const hash = await account.sendTransaction(tx)
+    test('should successfully send a transaction', async () => {
+      const hash = await account.sendTransaction(TRANSACTION)
 
-      expect(hash.match(/^0x[0-9a-fA-F]{64}$/)).toBeTruthy();
+      const transaction = await hre.ethers.provider.getTransaction(hash)
+
+      expect(transaction.to).toBe(TRANSACTION.to)
+
+      expect(transaction.value).toBe(BigInt(TRANSACTION.value))
+
+      expect(transaction.data).toBe('0x')
     })
 
-    test('throws if provider is missing', async () => {
+    test('should successfully send a transaction with arbitrary data', async () => {
+      const TRANSACTION_WITH_DATA = {
+        to: testToken.target,
+        value: 0,
+        data: testToken.interface.encodeFunctionData('balanceOf', ['0x636e9c21f27d9401ac180666bf8DC0D3FcEb0D24'])
+      }
+
+      const hash = await account.sendTransaction(TRANSACTION_WITH_DATA)
+
+      const transaction = await hre.ethers.provider.getTransaction(hash)
+
+      expect(transaction.to).toBe(TRANSACTION_WITH_DATA.to)
+
+      expect(transaction.value).toBe(BigInt(TRANSACTION_WITH_DATA.value))
+
+      expect(transaction.data).toBe(TRANSACTION_WITH_DATA.data)
+    })
+
+    test('should throw if the account is not connected to a provider', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
-      const tx = {
-        to: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        value: 100
-      }
 
-      await expect(account.sendTransaction(tx)).rejects.toThrow()
+      await expect(account.sendTransaction(TRANSACTION))
+        .rejects.toThrow('The wallet must be connected to a provider to send transactions.')
     })
   })
 
-  describe('quoteTransaction method', () => {
-    test('returns estimated transaction fee', async () => {
-      const tx = {
-        to: await account.getAddress(),
-        value: 0
-      }
+  describe('quoteTransaction', () => {
+    const TRANSACTION = {
+      to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+      value: 1_000
+    }
 
-      const fee = await account.quoteTransaction(tx)
+    const EXPECTED_FEE = 49_611_983_472_910
 
-      expect(typeof fee).toBe('number')
+    test('should successfully quote a transaction', async () => {
+      const fee = await account.quoteTransaction(TRANSACTION)
 
-      expect(fee).toBeGreaterThan(0)
+      expect(fee).toBe(EXPECTED_FEE)
     })
 
-    test('throws if provider is missing', async () => {
-      const accountWithoutProvider = new WalletAccountEvm(SEED_PHRASE, "0'/0/1")
-
-      const tx = {
-        to: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        value: 0
+    test('should successfully quote a transaction with arbitrary data', async () => {
+      const TRANSACTION_WITH_DATA = {
+        to: testToken.target,
+        value: 0,
+        data: testToken.interface.encodeFunctionData('balanceOf', ['0x636e9c21f27d9401ac180666bf8DC0D3FcEb0D24'])
       }
 
-      await expect(accountWithoutProvider.quoteTransaction(tx)).rejects.toThrow('The wallet must be connected to a provider to quote transactions.')
+      const EXPECTED_FEE = 57_395_969_261_360
+
+      const fee = await account.quoteTransaction(TRANSACTION_WITH_DATA)
+
+      expect(fee).toBe(EXPECTED_FEE)
+    })
+
+    test('should throw if the account is not connected to a provider', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
+
+      await expect(account.quoteTransaction(TRANSACTION))
+        .rejects.toThrow('The wallet must be connected to a provider to quote transactions.')
     })
   })
 
-  describe('getBalance method', () => {
-    test('returns native balance as number', async () => {
+  describe('getBalance', () => {
+    test('should return the correct balance of the account', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/1", {
+        provider: hre.network.provider
+      })
+
+      await giveEthersTo(await account.getAddress(), 12_345)
+
       const balance = await account.getBalance()
 
-      expect(typeof balance).toBe('number')
-      expect(balance).toBeGreaterThan(0)
+      expect(balance).toBe(12_345)
     })
 
-    test('throws if provider is missing', async () => {
-      const accountWithoutProvider = new WalletAccountEvm(SEED_PHRASE, "0'/0/2")
+    test('should throw if the account is not connected to a provider', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      await expect(accountWithoutProvider.getBalance()).rejects.toThrow('The wallet must be connected to a provider to retrieve balances.')
+      await expect(account.getBalance())
+        .rejects.toThrow('The wallet must be connected to a provider to retrieve balances.')
     })
   })
 
-  describe('getTokenBalance method', () => {
-    test('returns token balance', async () => {
-      const balance = await account.getTokenBalance(myTokenAddress);
+  describe('getTokenBalance', () => {
+    test('should return the correct token balance of the account', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/1", {
+        provider: hre.network.provider
+      })
 
-      expect(balance).toBe(1000000000000000000);
+      await giveTestTokensTo(await account.getAddress(), 67_890)
+
+      const balance = await account.getTokenBalance(testToken.target)
+
+      expect(balance).toBe(67_890)
     })
 
-    test('throws if provider is missing', async () => {
-      const accountWithoutProvider = new WalletAccountEvm(SEED_PHRASE, "0'/0/3")
+    test('should throw if the account is not connected to a provider', async () => {
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      await expect(accountWithoutProvider.getTokenBalance(myTokenAddress)).rejects.toThrow('The wallet must be connected to a provider to retrieve token balances.')
+      await expect(account.getTokenBalance(testToken.target))
+        .rejects.toThrow('The wallet must be connected to a provider to retrieve token balances.')
     })
   })
 })
