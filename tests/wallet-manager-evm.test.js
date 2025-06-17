@@ -10,11 +10,11 @@ describe('WalletManagerEvm', () => {
   let wallet
 
   beforeEach(async () => {
+    await hre.network.provider.send('hardhat_reset')
+
     wallet = new WalletManagerEvm(SEED_PHRASE, {
       provider: hre.network.provider
     })
-
-    await hre.network.provider.send('hardhat_reset')
   })
 
   afterEach(() => {

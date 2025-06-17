@@ -63,6 +63,8 @@ describe('WalletAccountEvm', () => {
   }
 
   beforeEach(async () => {
+    await hre.network.provider.send('hardhat_reset')
+
     testToken = await deployTestToken()
 
     account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
@@ -255,7 +257,7 @@ describe('WalletAccountEvm', () => {
         value: 1_000
       }
 
-      const EXPECTED_FEE = 24_315_040_711_948
+      const EXPECTED_FEE = 57_752_750_000_000
 
       const { fee } = await account.quoteSendTransaction(TRANSACTION)
 
@@ -269,7 +271,7 @@ describe('WalletAccountEvm', () => {
         data: testToken.interface.encodeFunctionData('balanceOf', ['0x636e9c21f27d9401ac180666bf8DC0D3FcEb0D24'])
       }
 
-      const EXPECTED_FEE = 27_706_456_439_968
+      const EXPECTED_FEE = 66_814_000_000_000
 
       const { fee } = await account.quoteSendTransaction(TRANSACTION_WITH_DATA)
 
@@ -341,7 +343,7 @@ describe('WalletAccountEvm', () => {
         amount: 100
       }
 
-      const EXPECTED_FEE = 55_695_563_587_584
+      const EXPECTED_FEE = 143_352_000_000_000
 
       const { fee } = await account.quoteTransfer(TRANSFER)
 
