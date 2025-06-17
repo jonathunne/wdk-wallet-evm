@@ -20,29 +20,16 @@ import * as bip39 from 'bip39'
 
 import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 
-/**
- * @typedef {import("@wdk/wallet").IWalletAccount} IWalletAccount
- */
+/** @typedef {import('ethers').HDNodeWallet} HDNodeWallet */
 
-/**
- * @typedef {import("@wdk/wallet").KeyPair} KeyPair
- */
+/** @typedef {import('ethers').Eip1193Provider} Eip1193Provider */
 
-/**
- * @typedef { import("@wdk/wallet").TransactionResult } TransactionResult
- */
+/** @typedef {import('@wdk/wallet').IWalletAccount} IWalletAccount */
 
-/**
- * @typedef { import("@wdk/wallet").TransferOptions } TransferOptions
- */
-
-/**
- * @typedef { import("@wdk/wallet").TransferResult } TransferResult
- */
-
-/**
- * @typedef {import('ethers').Eip1193Provider} Eip1193Provider
- */
+/** @typedef {import('@wdk/wallet').KeyPair} KeyPair */
+/** @typedef {import('@wdk/wallet').TransactionResult} TransactionResult */
+/** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
+/** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
 
 /**
  * @typedef {Object} EvmTransaction
@@ -62,6 +49,22 @@ import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
  */
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
+
+function getTransferTx (options) {
+  const { token, recipient, amount } = options
+
+  const abi = ['function transfer(address to, uint256 amount) returns (bool)']
+
+  const contract = new Contract(token, abi)
+
+  const tx = {
+    to: token,
+    value: 0,
+    data: contract.interface.encodeFunctionData('transfer', [recipient, amount])
+  }
+
+  return tx
+}
 
 /** @implements {IWalletAccount} */
 export default class WalletAccountEvm {
@@ -95,7 +98,7 @@ export default class WalletAccountEvm {
      * The account.
      *
      * @protected
-     * @type {MemorySafeHDNodeWallet}
+     * @type {HDNodeWallet}
      */
     this._account = MemorySafeHDNodeWallet.fromSeed(seed)
       .derivePath(path)
@@ -111,14 +114,29 @@ export default class WalletAccountEvm {
     }
   }
 
+  /**
+   * The derivation path's index of this account.
+   *
+   * @type {number}
+   */
   get index () {
     return this._account.index
   }
 
+  /**
+   * The derivation path of this account (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
+   *
+   * @type {string}
+   */
   get path () {
     return this._account.path
   }
 
+  /**
+   * The account's key pair.
+   *
+   * @type {KeyPair}
+   */
   get keyPair () {
     return {
       privateKey: this._account.privateKeyBuffer,
@@ -126,46 +144,79 @@ export default class WalletAccountEvm {
     }
   }
 
+  /**
+   * Returns the account's address.
+   *
+   * @returns {Promise<string>} The account's address.
+   */
   async getAddress () {
     return this._account.address
   }
 
+  /**
+   * Signs a message.
+   *
+   * @param {string} message - The message to sign.
+   * @returns {Promise<string>} The message's signature.
+   */
   async sign (message) {
     return await this._account.signMessage(message)
   }
 
+  /**
+   * Verifies a message's signature.
+   *
+   * @param {string} message - The original message.
+   * @param {string} signature - The signature to verify.
+   * @returns {Promise<boolean>} True if the signature is valid.
+   */
   async verify (message, signature) {
     const address = await verifyMessage(message, signature)
 
     return address.toLowerCase() === this._account.address.toLowerCase()
   }
 
+  /**
+   * Returns the account's eth balance.
+   *
+   * @returns {Promise<number>} The eth balance (in weis).
+   */
   async getBalance () {
     if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider to retrieve balances.')
     }
 
-    const balance = await this._account.provider.getBalance(await this.getAddress())
+    const address = await this.getAddress()
 
-    return Number(balance)
-  }
-
-  async getTokenBalance (tokenAddress) {
-    if (!this._account.provider) {
-      throw new Error('The wallet must be connected to a provider to retrieve token balances.')
-    }
-
-    const abi = ['function balanceOf(address owner) view returns (uint256)']
-    const token = new Contract(tokenAddress, abi, this._account.provider)
-    const balance = await token.balanceOf(await this.getAddress())
+    const balance = await this._account.provider.getBalance(address)
 
     return Number(balance)
   }
 
   /**
-   * Sends a transaction with arbitrary data.
+   * Returns the account balance for a specific token.
    *
-   * @param {EvmTransaction} tx - The transaction to send.
+   * @param {string} tokenAddress - The smart contract address of the token.
+   * @returns {Promise<number>} The token balance (in base unit).
+   */
+  async getTokenBalance (tokenAddress) {
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to retrieve token balances.')
+    }
+
+    const address = await this.getAddress()
+
+    const abi = ['function balanceOf(address owner) view returns (uint256)']
+    const contract = new Contract(tokenAddress, abi, this._account.provider)
+    const balance = await contract.balanceOf(address)
+
+    return Number(balance)
+  }
+
+  /**
+   * Sends a transaction.
+   *
+   * @param {EvmTransaction} tx - The transaction.
    * @returns {Promise<TransactionResult>} The transaction's result.
    */
   async sendTransaction (tx) {
@@ -184,61 +235,70 @@ export default class WalletAccountEvm {
   }
 
   /**
-   * Quotes a transaction.
+   * Quotes the costs of a send transaction operation.
    *
-   * @param {EvmTransaction} tx - The transaction to quote.
-   * @returns {Promise<Omit<TransactionResult, "hash">>} The transaction's quotes (in weis).
+   * @see {sendTransaction}
+   * @param {EvmTransaction} tx - The transaction.
+   * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
    */
   async quoteSendTransaction (tx) {
     if (!this._account.provider) {
-      throw new Error('The wallet must be connected to a provider to quote transactions.')
+      throw new Error('The wallet must be connected to a provider to quote send transaction operations.')
     }
 
-    const gasLimit = await this._account.provider.estimateGas(tx)
+    const gas = await this._account.provider.estimateGas(tx)
 
     const { maxFeePerGas } = await this._account.provider.getFeeData()
 
-    return { fee: Number(gasLimit * maxFeePerGas) }
+    return { fee: Number(gas * maxFeePerGas) }
   }
 
+  /**
+   * Transfers a token to another address.
+   *
+   * @param {TransferOptions} options - The transfer's options.
+   * @returns {Promise<TransferResult>} The transfer's result.
+   */
   async transfer (options) {
     if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider to transfer tokens.')
     }
 
-    const { token, recipient, amount, simulate } = options
-
-    const abi = [
-      'function transfer(address to, uint256 amount) returns (bool)'
-    ]
-
-    const tokenContract = new Contract(token, abi, this._account)
-    const data = tokenContract.interface.encodeFunctionData('transfer', [recipient, amount])
-
-    const tx = {
-      to: token,
-      data
-    }
+    const tx = getTransferTx(options)
 
     const { fee } = await this.quoteSendTransaction(tx)
 
-    if (this._config.transferMaxFee && fee >= this._config.transferMaxFee) {
-      throw new Error('Exceeded maximum fee cost for transfer.')
+    if (this._config.transferMaxFee != undefined && fee >= this._config.transferMaxFee) {
+      throw new Error('Exceeded maximum fee cost for transfer operation.')
     }
 
-    if (simulate) {
-      return { fee }
-    }
+    const result = await this.sendTransaction(tx)
 
-    const txRes = this.sendTransaction(tx)
-
-    return txRes
+    return result
   }
 
+  /**
+   * Quotes the costs of a transfer operation.
+   *
+   * @see {transfer}
+   * @param {TransferOptions} options - The transfer's options.
+   * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
+   */
   async quoteTransfer (options) {
-    return this.transfer({ ...options, simulate: true })
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to quote transfer operations.')
+    }
+
+    const tx = getTransferTx(options)
+
+    const result = await this.quoteSendTransaction(tx)
+
+    return result
   }
 
+  /**
+   * Disposes the wallet account, erasing the private key from the memory.
+   */
   dispose () {
     this._account.dispose()
   }

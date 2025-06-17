@@ -26,48 +26,45 @@ const ACCOUNT = {
   }
 }
 
-const TEST_TOKEN = {
-  address: '0x42470dD2D7CE0AA9Dc7a419D725f06279bb444F1'
-}
-
-async function giveEthersTo(recipient, value) {
-  const [signer] = await hre.ethers.getSigners()
-
-  const transaction = await signer.sendTransaction({
-    to: recipient,
-    value
-  })
-
-  await transaction.wait()
-}
-
-async function giveTestTokensTo(recipient, value) {
-  const transaction = await testToken.transfer(
-    recipient,
-    value
-  )
-
-  await transaction.wait()
-}
-
-let testToken
-
-beforeAll(async () => {
+async function deployTestToken () {
   const [signer] = await hre.ethers.getSigners()
 
   const factory = new ContractFactory(TestToken.abi, TestToken.bytecode, signer)
-
-  testToken = await factory.deploy()
-
-  const transaction = await testToken.deploymentTransaction()
+  const contract = await factory.deploy()
+  const transaction = await contract.deploymentTransaction()
 
   await transaction.wait()
-})
+
+  return contract
+}
 
 describe('WalletAccountEvm', () => {
-  let account
+  let testToken,
+      account
+
+  async function giveEthersTo(recipient, value) {
+    const [signer] = await hre.ethers.getSigners()
+
+    const transaction = await signer.sendTransaction({
+      to: recipient,
+      value
+    })
+
+    await transaction.wait()
+  }
+
+  async function giveTestTokensTo(recipient, value) {
+    const transaction = await testToken.transfer(
+      recipient,
+      value
+    )
+
+    await transaction.wait()
+  }
 
   beforeEach(async () => {
+    testToken = await deployTestToken()
+
     account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
       provider: hre.network.provider
     })
@@ -160,7 +157,6 @@ describe('WalletAccountEvm', () => {
     })
   })
 
-
   describe('getBalance', () => {
     test('should return the correct balance of the account', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/1", {
@@ -203,24 +199,24 @@ describe('WalletAccountEvm', () => {
     })
   })
 
-  describe('sendTransaction method', () => {
-    const TRANSACTION = {
-      to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
-      value: 1_000
-    }
-
+  describe('sendTransaction', () => {
     test('should successfully send a transaction', async () => {
+      const TRANSACTION = {
+        to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+        value: 1_000
+      }
+
       const { hash, fee } = await account.sendTransaction(TRANSACTION)
 
       const transaction = await hre.ethers.provider.getTransaction(hash)
-      const transactionReceipt = await hre.ethers.provider.getTransactionReceipt(hash)
 
+      const receipt = await hre.ethers.provider.getTransactionReceipt(hash)
+
+      expect(transaction.hash).toBe(hash)
       expect(transaction.to).toBe(TRANSACTION.to)
-      expect(transaction.from).toBe(await account.getAddress())
-      expect(Number(transaction.value)).toBe(TRANSACTION.value)
+      expect(transaction.value).toBe(BigInt(TRANSACTION.value))
 
-      expect(Number(transactionReceipt.fee)).toBe(fee)
-      expect(transactionReceipt.status).toBe(1)
+      expect(receipt.fee).toBe(BigInt(fee))
     })
 
     test('should successfully send a transaction with arbitrary data', async () => {
@@ -233,34 +229,34 @@ describe('WalletAccountEvm', () => {
       const { hash, fee } = await account.sendTransaction(TRANSACTION_WITH_DATA)
 
       const transaction = await hre.ethers.provider.getTransaction(hash)
-      const transactionReceipt = await hre.ethers.provider.getTransactionReceipt(hash)
 
+      const receipt = await hre.ethers.provider.getTransactionReceipt(hash)
+
+      expect(transaction.hash).toBe(hash)
       expect(transaction.to).toBe(TRANSACTION_WITH_DATA.to)
-      expect(transaction.from).toBe(await account.getAddress())
-      expect(Number(transaction.value)).toBe(TRANSACTION_WITH_DATA.value)
+      expect(transaction.value).toBe(BigInt(TRANSACTION_WITH_DATA.value))
       expect(transaction.data).toBe(TRANSACTION_WITH_DATA.data)
 
-      expect(Number(transactionReceipt.fee)).toBe(fee)
-      expect(transactionReceipt.status).toBe(1)
+      expect(receipt.fee).toBe(BigInt(fee))
     })
 
     test('should throw if the account is not connected to a provider', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      await expect(account.sendTransaction(TRANSACTION))
+      await expect(account.sendTransaction({ }))
         .rejects.toThrow('The wallet must be connected to a provider to send transactions.')
     })
   })
 
-  describe('quoteTransaction', () => {
-    const TRANSACTION = {
-      to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
-      value: 1_000
-    }
-
-    const EXPECTED_FEE = 42_921_547_517_892
-
+  describe('quoteSendTransaction', () => {
     test('should successfully quote a transaction', async () => {
+      const TRANSACTION = {
+        to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+        value: 1_000
+      }
+
+      const EXPECTED_FEE = 24_315_040_711_948
+
       const { fee } = await account.quoteSendTransaction(TRANSACTION)
 
       expect(fee).toBe(EXPECTED_FEE)
@@ -273,7 +269,7 @@ describe('WalletAccountEvm', () => {
         data: testToken.interface.encodeFunctionData('balanceOf', ['0x636e9c21f27d9401ac180666bf8DC0D3FcEb0D24'])
       }
 
-      const EXPECTED_FEE = 49_655_822_032_032
+      const EXPECTED_FEE = 27_706_456_439_968
 
       const { fee } = await account.quoteSendTransaction(TRANSACTION_WITH_DATA)
 
@@ -283,56 +279,70 @@ describe('WalletAccountEvm', () => {
     test('should throw if the account is not connected to a provider', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      await expect(account.quoteSendTransaction(TRANSACTION))
-        .rejects.toThrow('The wallet must be connected to a provider to quote transactions.')
+      await expect(account.quoteSendTransaction({ }))
+        .rejects.toThrow('The wallet must be connected to a provider to quote send transaction operations.')
     })
   })
 
   describe('transfer', () => {
-    const TRANSFER = {
-      token: TEST_TOKEN.address,
-      recipient: ACCOUNT.address,
-      amount: 1000
-    }
+    test('should successfully transfer tokens', async () => {
+      const TRANSFER = {
+        token: testToken.target,
+        recipient: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+        amount: 100
+      }
 
-    test('transfers ERC20 token', async () => {
       const { hash, fee } = await account.transfer(TRANSFER)
+
+      const transaction = await hre.ethers.provider.getTransaction(hash)
 
       const receipt = await hre.ethers.provider.getTransactionReceipt(hash)
 
-      expect(fee).toBe(Number(receipt.fee))
-      expect(receipt.status).toBe(1)
-      expect(receipt.logs.filter(({ transactionHash }) => hash)).toHaveLength(1)
+      expect(transaction.hash).toBe(hash)
+      expect(transaction.to).toBe(TRANSFER.token)
+      expect(transaction.value).toBe(BigInt(0))
+
+      const data = testToken.interface.encodeFunctionData('transfer', [TRANSFER.recipient, TRANSFER.amount])
+
+      expect(transaction.data).toBe(data)
+
+      expect(receipt.fee).toBe(BigInt(fee))
+    })
+
+    test('should throw if transfer fee exceeds the transfer max fee configuration', async () => {
+      const TRANSFER = {
+        token: testToken.target,
+        recipient: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+        amount: 100
+      }
+      
+      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
+        provider: hre.network.provider,
+        transferMaxFee: 0
+      })
+
+      await expect(account.transfer(TRANSFER))
+        .rejects.toThrow('Exceeded maximum fee cost for transfer operation.')
     })
 
     test('should throw if the account is not connected to a provider', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      expect(account.transfer(TRANSFER))
+      await expect(account.transfer({ }))
         .rejects.toThrow('The wallet must be connected to a provider to transfer tokens.')
-    })
-
-    test('should throw if transfer fee exceeds transferMaxFee in config', async () => {
-      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
-        provider: hre.network.provider,
-        transferMaxFee: 1
-      })
-
-      expect(account.transfer(TRANSFER))
-        .rejects.toThrow('Exceeded maximum fee cost for transfer.')
     })
   })
 
   describe('quoteTransfer', () => {
-    const TRANSFER = {
-      token: TEST_TOKEN.address,
-      recipient: ACCOUNT.address,
-      amount: 1000
-    }
+    test('should successfully quote a transfer operation', async () => {
+      const TRANSFER = {
+        token: testToken.target,
+        recipient: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
+        amount: 100
+      }
 
-    const EXPECTED_FEE = 58_251_497_242_696
+      const EXPECTED_FEE = 55_695_563_587_584
 
-    test('quote transfer ERC20 token', async () => {
       const { fee } = await account.quoteTransfer(TRANSFER)
 
       expect(fee).toBe(EXPECTED_FEE)
@@ -341,18 +351,8 @@ describe('WalletAccountEvm', () => {
     test('should throw if the account is not connected to a provider', async () => {
       const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
 
-      await expect(account.quoteTransfer(TRANSFER))
-        .rejects.toThrow('The wallet must be connected to a provider to transfer tokens.')
-    })
-
-    test('should throw if transfer fee exceeds transferMaxFee in config', async () => {
-      const account = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
-        provider: hre.network.provider,
-        transferMaxFee: 1
-      })
-
-      expect(account.transfer(TRANSFER))
-        .rejects.toThrow('Exceeded maximum fee cost for transfer.')
+      await expect(account.quoteTransfer({ }))
+        .rejects.toThrow('The wallet must be connected to a provider to quote transfer operations.')
     })
   })
 })

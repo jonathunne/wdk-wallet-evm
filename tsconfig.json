@@ -12,7 +12,6 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "noResolve": true,
-    "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@wdk", "./node_modules/ethers"]
+    "skipLibCheck": true
   }
 }

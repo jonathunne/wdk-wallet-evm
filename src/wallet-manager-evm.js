@@ -14,19 +14,21 @@
 
 'use strict'
 
-import { BrowserProvider, JsonRpcProvider } from 'ethers'
-
 import AbstractWalletManager from '@wdk/wallet'
 
+import { BrowserProvider, JsonRpcProvider } from 'ethers'
+
 import WalletAccountEvm from './wallet-account-evm.js'
+
+/** @typedef {import('ethers').Provider} Provider */
+
+/** @typedef {import("@wdk/wallet").FeeRates} FeeRates */
+
+/** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
 
 const FEE_RATE_NORMAL_MULTIPLIER = 1.1
 
 const FEE_RATE_FAST_MULTIPLIER = 2.0
-
-/** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
-
-/** @typedef {import("@wdk/wallet").FeeRates} FeeRates */
 
 export default class WalletManagerEvm extends AbstractWalletManager {
   /**
@@ -93,6 +95,11 @@ export default class WalletManagerEvm extends AbstractWalletManager {
     return this._accounts[path]
   }
 
+  /**
+   * Returns the current fee rates.
+   *
+   * @returns {Promise<FeeRates>} The fee rates.
+   */
   async getFeeRates () {
     if (!this._provider) {
       throw new Error('The wallet must be connected to a provider to get fee rates.')
@@ -108,6 +115,9 @@ export default class WalletManagerEvm extends AbstractWalletManager {
     }
   }
 
+  /**
+   * Disposes all the wallet accounts, erasing their private keys from the memory.
+   */
   dispose () {
     for (const account of Object.values(this._accounts)) {
       account.dispose()

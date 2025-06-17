@@ -14,10 +14,10 @@
   "dependencies": {
     "@noble/curves": "1.9.2",
     "@noble/secp256k1": "2.2.3",
+    "@wdk/wallet": "https://github.com/tetherto/wdk-wallet#develop",
     "bip39": "3.1.0",
     "ethers": "6.14.3",
-    "sodium-universal": "5.0.1",
-    "@wdk/wallet": "https://github.com/tetherto/wdk-wallet#develop"
+    "sodium-universal": "5.0.1"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "3.0.9",

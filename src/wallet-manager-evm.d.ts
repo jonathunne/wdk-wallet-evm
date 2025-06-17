@@ -1,5 +1,3 @@
-/** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
-/** @typedef {import("@wdk/wallet").FeeRates} FeeRates */
 export default class WalletManagerEvm {
     /**
      * Creates a new wallet manager for evm blockchains.
@@ -44,12 +42,18 @@ export default class WalletManagerEvm {
      * @returns {Promise<WalletAccountEvm>} The account.
      */
     getAccountByPath(path: string): Promise<WalletAccountEvm>;
-    getFeeRates(): Promise<{
-        normal: number;
-        fast: number;
-    }>;
+    /**
+     * Returns the current fee rates.
+     *
+     * @returns {Promise<FeeRates>} The fee rates.
+     */
+    getFeeRates(): Promise<FeeRates>;
+    /**
+     * Disposes all the wallet accounts, erasing their private keys from the memory.
+     */
     dispose(): void;
 }
-export type EvmWalletConfig = import("./wallet-account-evm.js").EvmWalletConfig;
+export type Provider = import("ethers").Provider;
 export type FeeRates = import("@wdk/wallet").FeeRates;
+export type EvmWalletConfig = import("./wallet-account-evm.js").EvmWalletConfig;
 import WalletAccountEvm from './wallet-account-evm.js';

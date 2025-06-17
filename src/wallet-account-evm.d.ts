@@ -19,44 +19,103 @@ export default class WalletAccountEvm implements IWalletAccount {
      * The account.
      *
      * @protected
-     * @type {MemorySafeHDNodeWallet}
+     * @type {HDNodeWallet}
      */
-    protected _account: MemorySafeHDNodeWallet;
-    get index(): any;
-    get path(): any;
-    get keyPair(): {
-        privateKey: any;
-        publicKey: any;
-    };
-    getAddress(): Promise<any>;
-    sign(message: any): Promise<any>;
-    verify(message: any, signature: any): Promise<boolean>;
-    getBalance(): Promise<number>;
-    getTokenBalance(tokenAddress: any): Promise<number>;
+    protected _account: HDNodeWallet;
     /**
-     * Sends a transaction with arbitrary data.
+     * The derivation path's index of this account.
      *
-     * @param {EvmTransaction} tx - The transaction to send.
+     * @type {number}
+     */
+    get index(): number;
+    /**
+     * The derivation path of this account (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
+     *
+     * @type {string}
+     */
+    get path(): string;
+    /**
+     * The account's key pair.
+     *
+     * @type {KeyPair}
+     */
+    get keyPair(): KeyPair;
+    /**
+     * Returns the account's address.
+     *
+     * @returns {Promise<string>} The account's address.
+     */
+    getAddress(): Promise<string>;
+    /**
+     * Signs a message.
+     *
+     * @param {string} message - The message to sign.
+     * @returns {Promise<string>} The message's signature.
+     */
+    sign(message: string): Promise<string>;
+    /**
+     * Verifies a message's signature.
+     *
+     * @param {string} message - The original message.
+     * @param {string} signature - The signature to verify.
+     * @returns {Promise<boolean>} True if the signature is valid.
+     */
+    verify(message: string, signature: string): Promise<boolean>;
+    /**
+     * Returns the account's eth balance.
+     *
+     * @returns {Promise<number>} The eth balance (in weis).
+     */
+    getBalance(): Promise<number>;
+    /**
+     * Returns the account balance for a specific token.
+     *
+     * @param {string} tokenAddress - The smart contract address of the token.
+     * @returns {Promise<number>} The token balance (in base unit).
+     */
+    getTokenBalance(tokenAddress: string): Promise<number>;
+    /**
+     * Sends a transaction.
+     *
+     * @param {EvmTransaction} tx - The transaction.
      * @returns {Promise<TransactionResult>} The transaction's result.
      */
     sendTransaction(tx: EvmTransaction): Promise<TransactionResult>;
     /**
-     * Quotes a transaction.
+     * Quotes the costs of a send transaction operation.
      *
-     * @param {EvmTransaction} tx - The transaction to quote.
-     * @returns {Promise<Omit<TransactionResult, "hash">>} The transaction's quotes (in weis).
+     * @see {sendTransaction}
+     * @param {EvmTransaction} tx - The transaction.
+     * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
      */
     quoteSendTransaction(tx: EvmTransaction): Promise<Omit<TransactionResult, "hash">>;
-    transfer(options: any): Promise<any>;
-    quoteTransfer(options: any): Promise<any>;
+    /**
+     * Transfers a token to another address.
+     *
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<TransferResult>} The transfer's result.
+     */
+    transfer(options: TransferOptions): Promise<TransferResult>;
+    /**
+     * Quotes the costs of a transfer operation.
+     *
+     * @see {transfer}
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
+     */
+    quoteTransfer(options: TransferOptions): Promise<Omit<TransferResult, "hash">>;
+    /**
+     * Disposes the wallet account, erasing the private key from the memory.
+     */
     dispose(): void;
 }
-export type IWalletAccount = any;
+export type HDNodeWallet = import('ethers').HDNodeWallet;
+export type Eip1193Provider = import('ethers').Eip1193Provider;
+export type IWalletAccount = import("@wdk/wallet").IWalletAccount;
 export type KeyPair = import("@wdk/wallet").KeyPair;
 export type TransactionResult = import("@wdk/wallet").TransactionResult;
 export type TransferOptions = import("@wdk/wallet").TransferOptions;
 export type TransferResult = import("@wdk/wallet").TransferResult;
-export type Eip1193Provider = import("ethers").Eip1193Provider;
 export type EvmTransaction = {
     /**
      * - The transaction's recipient.
