@@ -14,25 +14,23 @@
 
 'use strict'
 
+import AbstractWalletManager from '@wdk/wallet'
+
 import { BrowserProvider, JsonRpcProvider } from 'ethers'
 
-import * as bip39 from 'bip39'
-
 import WalletAccountEvm from './wallet-account-evm.js'
+
+/** @typedef {import('ethers').Provider} Provider */
+
+/** @typedef {import("@wdk/wallet").FeeRates} FeeRates */
+
+/** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
 
 const FEE_RATE_NORMAL_MULTIPLIER = 1.1
 
 const FEE_RATE_FAST_MULTIPLIER = 2.0
 
-/** @typedef {import('./wallet-account-evm.js').EvmWalletConfig} EvmWalletConfig */
-
-export default class WalletManagerEvm {
-  #seed
-  #config
-  #accounts
-
-  #provider
-
+export default class WalletManagerEvm extends AbstractWalletManager {
   /**
    * Creates a new wallet manager for evm blockchains.
    *
@@ -40,53 +38,29 @@ export default class WalletManagerEvm {
    * @param {EvmWalletConfig} [config] - The configuration object.
    */
   constructor (seed, config = {}) {
-    if (typeof seed === 'string') {
-      if (!WalletManagerEvm.isValidSeedPhrase(seed)) {
-        throw new Error('The seed phrase is invalid.')
-      }
+    super(seed, config)
 
-      seed = bip39.mnemonicToSeedSync(seed)
-    }
-
-    this.#seed = seed
-    this.#config = config
-    this.#accounts = { }
+    /**
+     * A map between derivation paths and wallet accounts. It contains all the wallet accounts that have been accessed through the {@link getAccount} and {@link getAccountByPath} methods.
+     *
+     * @protected
+     * @type {{ [path: string]: WalletAccountEvm }}
+     */
+    this._accounts = {}
 
     const { provider } = config
 
     if (provider) {
-      this.#provider = typeof provider === 'string'
+      /**
+       * An ethers provider to interact with a node of the blockchain.
+       *
+       * @protected
+       * @type {Provider | undefined}
+       */
+      this._provider = typeof provider === 'string'
         ? new JsonRpcProvider(provider)
         : new BrowserProvider(provider)
     }
-  }
-
-  /**
-   * Returns a random [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-   *
-   * @returns {string} The seed phrase.
-   */
-  static getRandomSeedPhrase () {
-    return bip39.generateMnemonic()
-  }
-
-  /**
-   * Checks if a seed phrase is valid.
-   *
-   * @param {string} seedPhrase - The seed phrase.
-   * @returns {boolean} True if the seed phrase is valid.
-   */
-  static isValidSeedPhrase (seedPhrase) {
-    return bip39.validateMnemonic(seedPhrase)
-  }
-
-  /**
-   * The seed phrase of the wallet.
-   *
-   * @type {Uint8Array}
-   */
-  get seed () {
-    return this.#seed
   }
 
   /**
@@ -112,26 +86,26 @@ export default class WalletManagerEvm {
    * @returns {Promise<WalletAccountEvm>} The account.
    */
   async getAccountByPath (path) {
-    if (!this.#accounts[path]) {
-      const account = new WalletAccountEvm(this.#seed, path, this.#config)
+    if (!this._accounts[path]) {
+      const account = new WalletAccountEvm(this.seed, path, this._config)
 
-      this.#accounts[path] = account
+      this._accounts[path] = account
     }
 
-    return this.#accounts[path]
+    return this._accounts[path]
   }
 
   /**
    * Returns the current fee rates.
    *
-   * @returns {Promise<{ normal: number, fast: number }>} The fee rates (in weis).
+   * @returns {Promise<FeeRates>} The fee rates.
    */
   async getFeeRates () {
-    if (!this.#provider) {
+    if (!this._provider) {
       throw new Error('The wallet must be connected to a provider to get fee rates.')
     }
 
-    const feeData = await this.#provider.getFeeData()
+    const feeData = await this._provider.getFeeData()
 
     const maxFeePerGas = Number(feeData.maxFeePerGas)
 
@@ -142,13 +116,13 @@ export default class WalletManagerEvm {
   }
 
   /**
-   * Disposes all the wallet accounts, and erases their private keys from the memory.
+   * Disposes all the wallet accounts, erasing their private keys from the memory.
    */
   dispose () {
-    for (const account of Object.values(this.#accounts)) {
+    for (const account of Object.values(this._accounts)) {
       account.dispose()
     }
 
-    this.#accounts = { }
+    this._accounts = {}
   }
 }

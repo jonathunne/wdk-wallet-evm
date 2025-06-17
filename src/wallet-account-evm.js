@@ -20,15 +20,16 @@ import * as bip39 from 'bip39'
 
 import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 
-/**
- * @typedef {import('ethers').Eip1193Provider} Eip1193Provider
- */
+/** @typedef {import('ethers').HDNodeWallet} HDNodeWallet */
 
-/**
- * @typedef {Object} KeyPair
- * @property {Uint8Array} publicKey - The public key.
- * @property {Uint8Array} privateKey - The private key.
- */
+/** @typedef {import('ethers').Eip1193Provider} Eip1193Provider */
+
+/** @typedef {import('@wdk/wallet').IWalletAccount} IWalletAccount */
+
+/** @typedef {import('@wdk/wallet').KeyPair} KeyPair */
+/** @typedef {import('@wdk/wallet').TransactionResult} TransactionResult */
+/** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
+/** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
 
 /**
  * @typedef {Object} EvmTransaction
@@ -44,13 +45,29 @@ import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 /**
  * @typedef {Object} EvmWalletConfig
  * @property {string | Eip1193Provider} [provider] - The url of the rpc provider, or an instance of a class that implements eip-1193.
+ * @property {number} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 
-export default class WalletAccountEvm {
-  #account
+function getTransferTx (options) {
+  const { token, recipient, amount } = options
 
+  const abi = ['function transfer(address to, uint256 amount) returns (bool)']
+
+  const contract = new Contract(token, abi)
+
+  const tx = {
+    to: token,
+    value: 0,
+    data: contract.interface.encodeFunctionData('transfer', [recipient, amount])
+  }
+
+  return tx
+}
+
+/** @implements {IWalletAccount} */
+export default class WalletAccountEvm {
   /**
    * Creates a new evm wallet account.
    *
@@ -69,7 +86,21 @@ export default class WalletAccountEvm {
 
     path = BIP_44_ETH_DERIVATION_PATH_PREFIX + '/' + path
 
-    this.#account = MemorySafeHDNodeWallet.fromSeed(seed)
+    /**
+     * The wallet account configuration.
+     *
+     * @protected
+     * @type {EvmWalletConfig}
+     */
+    this._config = config
+
+    /**
+     * The account.
+     *
+     * @protected
+     * @type {HDNodeWallet}
+     */
+    this._account = MemorySafeHDNodeWallet.fromSeed(seed)
       .derivePath(path)
 
     let { provider } = config
@@ -79,7 +110,7 @@ export default class WalletAccountEvm {
         ? new JsonRpcProvider(provider)
         : new BrowserProvider(provider)
 
-      this.#account = this.#account.connect(provider)
+      this._account = this._account.connect(provider)
     }
   }
 
@@ -89,7 +120,7 @@ export default class WalletAccountEvm {
    * @type {number}
    */
   get index () {
-    return this.#account.index
+    return this._account.index
   }
 
   /**
@@ -98,7 +129,7 @@ export default class WalletAccountEvm {
    * @type {string}
    */
   get path () {
-    return this.#account.path
+    return this._account.path
   }
 
   /**
@@ -108,8 +139,8 @@ export default class WalletAccountEvm {
    */
   get keyPair () {
     return {
-      privateKey: this.#account.privateKeyBuffer,
-      publicKey: this.#account.publicKeyBuffer
+      privateKey: this._account.privateKeyBuffer,
+      publicKey: this._account.publicKeyBuffer
     }
   }
 
@@ -119,7 +150,7 @@ export default class WalletAccountEvm {
    * @returns {Promise<string>} The account's address.
    */
   async getAddress () {
-    return this.#account.address
+    return this._account.address
   }
 
   /**
@@ -129,7 +160,7 @@ export default class WalletAccountEvm {
    * @returns {Promise<string>} The message's signature.
    */
   async sign (message) {
-    return await this.#account.signMessage(message)
+    return await this._account.signMessage(message)
   }
 
   /**
@@ -142,54 +173,22 @@ export default class WalletAccountEvm {
   async verify (message, signature) {
     const address = await verifyMessage(message, signature)
 
-    return address.toLowerCase() === this.#account.address.toLowerCase()
+    return address.toLowerCase() === this._account.address.toLowerCase()
   }
 
   /**
-   * Sends a transaction with arbitrary data.
+   * Returns the account's eth balance.
    *
-   * @param {EvmTransaction} tx - The transaction to send.
-   * @returns {Promise<string>} The transaction's hash.
-   */
-  async sendTransaction (tx) {
-    if (!this.#account.provider) {
-      throw new Error('The wallet must be connected to a provider to send transactions.')
-    }
-
-    const { hash } = await this.#account.sendTransaction(tx)
-
-    return hash
-  }
-
-  /**
-   * Quotes a transaction.
-   *
-   * @param {EvmTransaction} tx - The transaction to quote.
-   * @returns {Promise<number>} The transaction’s fee (in weis).
-   */
-  async quoteTransaction (tx) {
-    if (!this.#account.provider) {
-      throw new Error('The wallet must be connected to a provider to quote transactions.')
-    }
-
-    const gasLimit = await this.#account.provider.estimateGas(tx)
-
-    const { maxFeePerGas } = await this.#account.provider.getFeeData()
-
-    return Number(gasLimit * maxFeePerGas)
-  }
-
-  /**
-   * Returns the account's native token balance.
-   *
-   * @returns {Promise<number>} The native token balance.
+   * @returns {Promise<number>} The eth balance (in weis).
    */
   async getBalance () {
-    if (!this.#account.provider) {
+    if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider to retrieve balances.')
     }
 
-    const balance = await this.#account.provider.getBalance(await this.getAddress())
+    const address = await this.getAddress()
+
+    const balance = await this._account.provider.getBalance(address)
 
     return Number(balance)
   }
@@ -198,24 +197,110 @@ export default class WalletAccountEvm {
    * Returns the account balance for a specific token.
    *
    * @param {string} tokenAddress - The smart contract address of the token.
-   * @returns {Promise<number>} The token balance.
+   * @returns {Promise<number>} The token balance (in base unit).
    */
   async getTokenBalance (tokenAddress) {
-    if (!this.#account.provider) {
+    if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider to retrieve token balances.')
     }
 
+    const address = await this.getAddress()
+
     const abi = ['function balanceOf(address owner) view returns (uint256)']
-    const token = new Contract(tokenAddress, abi, this.#account.provider)
-    const balance = await token.balanceOf(await this.getAddress())
+    const contract = new Contract(tokenAddress, abi, this._account.provider)
+    const balance = await contract.balanceOf(address)
 
     return Number(balance)
   }
 
   /**
-   * Disposes the wallet account, and erases the private key from the memory.
+   * Sends a transaction.
+   *
+   * @param {EvmTransaction} tx - The transaction.
+   * @returns {Promise<TransactionResult>} The transaction's result.
+   */
+  async sendTransaction (tx) {
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to send transactions.')
+    }
+
+    const transaction = await this._account.sendTransaction(tx)
+
+    const { hash, fee } = await transaction.wait()
+
+    return {
+      hash,
+      fee: Number(fee)
+    }
+  }
+
+  /**
+   * Quotes the costs of a send transaction operation.
+   *
+   * @see {sendTransaction}
+   * @param {EvmTransaction} tx - The transaction.
+   * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+   */
+  async quoteSendTransaction (tx) {
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to quote send transaction operations.')
+    }
+
+    const gas = await this._account.provider.estimateGas(tx)
+
+    const { maxFeePerGas } = await this._account.provider.getFeeData()
+
+    return { fee: Number(gas * maxFeePerGas) }
+  }
+
+  /**
+   * Transfers a token to another address.
+   *
+   * @param {TransferOptions} options - The transfer's options.
+   * @returns {Promise<TransferResult>} The transfer's result.
+   */
+  async transfer (options) {
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to transfer tokens.')
+    }
+
+    const tx = getTransferTx(options)
+
+    const { fee } = await this.quoteSendTransaction(tx)
+
+    // eslint-disable-next-line eqeqeq
+    if (this._config.transferMaxFee != undefined && fee >= this._config.transferMaxFee) {
+      throw new Error('Exceeded maximum fee cost for transfer operation.')
+    }
+
+    const result = await this.sendTransaction(tx)
+
+    return result
+  }
+
+  /**
+   * Quotes the costs of a transfer operation.
+   *
+   * @see {transfer}
+   * @param {TransferOptions} options - The transfer's options.
+   * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
+   */
+  async quoteTransfer (options) {
+    if (!this._account.provider) {
+      throw new Error('The wallet must be connected to a provider to quote transfer operations.')
+    }
+
+    const tx = getTransferTx(options)
+
+    const result = await this.quoteSendTransaction(tx)
+
+    return result
+  }
+
+  /**
+   * Disposes the wallet account, erasing the private key from the memory.
    */
   dispose () {
-    this.#account.dispose()
+    this._account.dispose()
   }
 }

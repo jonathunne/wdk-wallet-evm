@@ -13,9 +13,14 @@
 // limitations under the License.
 'use strict'
 
+/** @typedef {import('@wdk/wallet').FeeRates} FeeRates */
+/** @typedef {import('@wdk/wallet').KeyPair} KeyPair */
+/** @typedef {import('@wdk/wallet').TransactionResult} TransactionResult */
+/** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
+/** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
+
 /** @typedef {import('./src/wallet-manager-evm.js').EvmWalletConfig} EvmWalletConfig */
 
-/** @typedef {import('./src/wallet-account-evm.js').KeyPair} KeyPair */
 /** @typedef {import('./src/wallet-account-evm.js').EvmTransaction} EvmTransaction */
 
 export { default } from './src/wallet-manager-evm.js'

@@ -1,18 +1,5 @@
 export default class WalletManagerEvm {
     /**
-     * Returns a random [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-     *
-     * @returns {string} The seed phrase.
-     */
-    static getRandomSeedPhrase(): string;
-    /**
-     * Checks if a seed phrase is valid.
-     *
-     * @param {string} seedPhrase - The seed phrase.
-     * @returns {boolean} True if the seed phrase is valid.
-     */
-    static isValidSeedPhrase(seedPhrase: string): boolean;
-    /**
      * Creates a new wallet manager for evm blockchains.
      *
      * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
@@ -20,11 +7,21 @@ export default class WalletManagerEvm {
      */
     constructor(seed: string | Uint8Array, config?: EvmWalletConfig);
     /**
-     * The seed phrase of the wallet.
+     * A map between derivation paths and wallet accounts. It contains all the wallet accounts that have been accessed through the {@link getAccount} and {@link getAccountByPath} methods.
      *
-     * @type {Uint8Array}
+     * @protected
+     * @type {{ [path: string]: WalletAccountEvm }}
      */
-    get seed(): Uint8Array;
+    protected _accounts: {
+        [path: string]: WalletAccountEvm;
+    };
+    /**
+     * An ethers provider to interact with a node of the blockchain.
+     *
+     * @protected
+     * @type {Provider | undefined}
+     */
+    protected _provider: Provider | undefined;
     /**
      * Returns the wallet account at a specific index (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
      *
@@ -48,17 +45,15 @@ export default class WalletManagerEvm {
     /**
      * Returns the current fee rates.
      *
-     * @returns {Promise<{ normal: number, fast: number }>} The fee rates (in weis).
+     * @returns {Promise<FeeRates>} The fee rates.
      */
-    getFeeRates(): Promise<{
-        normal: number;
-        fast: number;
-    }>;
+    getFeeRates(): Promise<FeeRates>;
     /**
-     * Disposes all the wallet accounts, and erases their private keys from the memory.
+     * Disposes all the wallet accounts, erasing their private keys from the memory.
      */
     dispose(): void;
-    #private;
 }
+export type Provider = import("ethers").Provider;
+export type FeeRates = import("@wdk/wallet").FeeRates;
 export type EvmWalletConfig = import("./wallet-account-evm.js").EvmWalletConfig;
 import WalletAccountEvm from './wallet-account-evm.js';
