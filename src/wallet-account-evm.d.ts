@@ -109,13 +109,13 @@ export default class WalletAccountEvm implements IWalletAccount {
      */
     dispose(): void;
     /**
-     * Resolves the transaction data needed for EVM transfers.
+     * Returns an evm transaction to execute the given token transfer.
      *
      * @protected
      * @param {TransferOptions} options - The transfer's options.
-     * @returns {EvmTransaction} The evm transaction.
+     * @returns {Promise<EvmTransaction>} The evm transaction.
      */
-    protected _getTransferTx(options: TransferOptions): EvmTransaction;
+    protected _getTransferTransaction(options: TransferOptions): Promise<EvmTransaction>;
 }
 export type HDNodeWallet = import("ethers").HDNodeWallet;
 export type Eip1193Provider = import("ethers").Eip1193Provider;
