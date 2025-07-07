@@ -69,11 +69,6 @@ describe('@wdk/wallet-evm', () => {
       account1 = await wallet.getAccountByPath("0'/0/1")
     })
 
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
-    })
-
     test('should create a wallet and derive 2 accounts using path', async () => {
       expect(account0.index).toBe(ACCOUNT0.index)
 
@@ -153,11 +148,6 @@ describe('@wdk/wallet-evm', () => {
       account1 = await wallet.getAccountByPath("0'/0/1")
     })
 
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
-    })
-
     test('should successfully send transaction', async () => {
       const TRANSACTION = {
         to: await account1.getAddress(),
@@ -195,11 +185,6 @@ describe('@wdk/wallet-evm', () => {
       account0 = await wallet.getAccountByPath("0'/0/0")
       account1 = await wallet.getAccountByPath("0'/0/1")
       testToken = await deployTestToken()
-    })
-
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
     })
 
     test('should quote the cost of sending test tokens to from account0 to account1 and check the fee', async () => {
@@ -271,11 +256,6 @@ describe('@wdk/wallet-evm', () => {
       testToken = await deployTestToken()
     })
 
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
-    })
-
     test('should successfully send transaction', async () => {
       const TRANSACTION = {
         token: testToken.target,
@@ -312,11 +292,6 @@ describe('@wdk/wallet-evm', () => {
       account0 = await wallet.getAccountByPath("0'/0/0")
       account1 = await wallet.getAccountByPath("0'/0/1")
       testToken = await deployTestToken()
-    })
-
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
     })
 
     test('should get token balance of account0', async () => {
@@ -406,10 +381,6 @@ describe('@wdk/wallet-evm', () => {
       account0 = await wallet.getAccountByPath("0'/0/0")
     })
 
-    afterAll(async () => {
-      account0.dispose()
-    })
-
     test('should sign a message and verify its signature', async () => {
       signature = await account0.sign(message)
       expect(signature).toBeDefined()
@@ -469,11 +440,6 @@ describe('@wdk/wallet-evm', () => {
       account0 = await wallet.getAccountByPath("0'/0/0")
       account1 = await wallet.getAccountByPath("0'/0/1")
       testToken = await deployTestToken()
-    })
-
-    afterAll(async () => {
-      account0.dispose()
-      account1.dispose()
     })
 
     test('should send a transaction with a low transfer max fee', async () => {
