@@ -114,14 +114,6 @@ describe('WalletAccountEvm', () => {
     })
   })
 
-  describe('getAddress', () => {
-    test('should return the correct address', async () => {
-      const address = await account.getAddress()
-
-      expect(address).toBe(ACCOUNT.address)
-    })
-  })
-
   describe('sign', () => {
     const MESSAGE = 'Dummy message to sign.'
 

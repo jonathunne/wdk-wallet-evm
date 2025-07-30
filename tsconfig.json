@@ -2,6 +2,7 @@
   "include": [
     "index.js",
     "src/wallet-manager-evm.js",
+    "src/wallet-account-read-only-evm.js",
     "src/wallet-account-evm.js"
   ],
   "compilerOptions": {
@@ -12,6 +13,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "noResolve": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "./types"
   }
 }
