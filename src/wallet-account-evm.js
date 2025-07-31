@@ -23,8 +23,6 @@ import WalletAccountReadOnlyEvm from './wallet-account-read-only-evm.js'
 import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 
 /** @typedef {import('ethers').HDNodeWallet} HDNodeWallet */
-/** @typedef {import('ethers').Eip1193Provider} Eip1193Provider */
-/** @typedef {import('ethers').TransactionReceipt} EvmTransactionReceipt */
 
 /** @typedef {import('@wdk/wallet').IWalletAccount} IWalletAccount */
 

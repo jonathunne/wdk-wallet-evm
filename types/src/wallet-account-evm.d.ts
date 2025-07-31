@@ -75,8 +75,6 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm implement
     dispose(): void;
 }
 export type HDNodeWallet = import("ethers").HDNodeWallet;
-export type Eip1193Provider = import("ethers").Eip1193Provider;
-export type EvmTransactionReceipt = import("ethers").TransactionReceipt;
 export type IWalletAccount = import("@wdk/wallet").IWalletAccount;
 export type KeyPair = import("@wdk/wallet").KeyPair;
 export type TransactionResult = import("@wdk/wallet").TransactionResult;
