@@ -1,8 +1,16 @@
 export default class WalletAccountReadOnlyEvm extends AbstractWalletAccountReadOnly {
     /**
+     * Returns an evm transaction to execute the given token transfer.
+     *
+     * @protected
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<EvmTransaction>} The evm transaction.
+     */
+    protected static _getTransferTransaction(options: TransferOptions): Promise<EvmTransaction>;
+    /**
      * Creates a new evm read-only wallet account.
      *
-     * @param {string} [address] - The account's address. If not provided, it must be set after construction with the {@link setAddress} method.
+     * @param {string} address - The account's address.
      * @param {Omit<EvmWalletConfig, 'transferMaxFee'>} [config] - The configuration object.
      */
     constructor(address: string, config?: Omit<EvmWalletConfig, "transferMaxFee">);
@@ -54,14 +62,6 @@ export default class WalletAccountReadOnlyEvm extends AbstractWalletAccountReadO
      * @returns {Promise<EvmTransactionReceipt | null>} – The receipt, or null if the transaction has not been included in a block yet.
      */
     getTransactionReceipt(hash: string): Promise<EvmTransactionReceipt | null>;
-    /**
-     * Returns an evm transaction to execute the given token transfer.
-     *
-     * @protected
-     * @param {TransferOptions} options - The transfer's options.
-     * @returns {Promise<EvmTransaction>} The evm transaction.
-     */
-    protected static _getTransferTransaction(options: TransferOptions): Promise<EvmTransaction>;
 }
 export type Provider = import("ethers").Provider;
 export type Eip1193Provider = import("ethers").Eip1193Provider;
