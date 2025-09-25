@@ -1,0 +1,35 @@
+name: Debug NPM Access
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node with registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Check token and access
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "Checking npm whoami..."
+          npm whoami
+          
+          echo -e "\nChecking org packages access..."
+          npm access ls-packages @tetherto
+          
+          echo -e "\nTrying to view the package..."
+          npm view @tetherto/wdk-wallet@1.0.0-beta.1 || echo "Failed to view package"
+          
+          echo -e "\nChecking .npmrc contents (without token)..."
+          cat ~/.npmrc | sed 's/_authToken=.*/_authToken=[REDACTED]/'
+          
+          echo -e "\nTrying install with debug logging..."
+          npm install @tetherto/wdk-wallet@1.0.0-beta.1 --loglevel=verbose 2>&1 | tail -50
