@@ -38,13 +38,6 @@ import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers'
  */
 
 /**
- * @typedef {object} ApproveOptions
- * @property {string} token The address of the token to approve.
- * @property {string} spender The spender’s address.
- * @property {number | bigint} amount The amount of tokens to approve to the spender.
- */
-
-/**
  * @typedef {Object} EvmWalletConfig
  * @property {string | Eip1193Provider} [provider] - The url of the rpc provider, or an instance of a class that implements eip-1193.
  * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.

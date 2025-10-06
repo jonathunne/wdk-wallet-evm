@@ -34,6 +34,13 @@ import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 /** @typedef {import('./wallet-account-read-only-evm.js').EvmTransaction} EvmTransaction */
 /** @typedef {import('./wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 
+/**
+ * @typedef {object} ApproveOptions
+ * @property {string} token The address of the token to approve.
+ * @property {string} spender The spender’s address.
+ * @property {number | bigint} amount The amount of tokens to approve to the spender.
+ */
+
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 const USDT_MAINNET_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
