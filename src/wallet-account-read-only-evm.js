@@ -38,6 +38,13 @@ import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers'
  */
 
 /**
+ * @typedef {object} ApproveOptions
+ * @property {string} token The address of the token to approve.
+ * @property {string} spender The spender’s address.
+ * @property {number | bigint} amount The amount of tokens to approve to the spender.
+ */
+
+/**
  * @typedef {Object} EvmWalletConfig
  * @property {string | Eip1193Provider} [provider] - The url of the rpc provider, or an instance of a class that implements eip-1193.
  * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.
@@ -164,6 +171,20 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
     }
 
     return await this._provider.getTransactionReceipt(hash)
+  }
+
+  /**
+   * Returns the current allowance for the given token and spender.
+   * @param {string} token The token’s address.
+   * @param {string} spender The spender’s address.
+   * @returns {Promise<bigint>} The allowance.
+   */
+  async getAllowance (token, spender) {
+    const address = await this.getAddress()
+    const abi = ['function allowance(address owner, address spender) view returns (uint256)']
+    const contract = new Contract(token, abi, this._provider)
+    const allowance = await contract.allowance(address, spender)
+    return BigInt(allowance.toString())
   }
 
   /**
