@@ -19,6 +19,7 @@ import { verifyMessage, Contract } from 'ethers'
 import WalletAccountReadOnlyEvm from './wallet-account-read-only-evm.js'
 
 import SeedSignerEvm from './signers/seed-signer-evm.js'
+import { populateTransactionEvm } from './utils/tx-populator-evm.js'
 
 /** @typedef {import('ethers').HDNodeWallet} HDNodeWallet */
 
@@ -69,7 +70,10 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
 
     /** @private */
     this._signer = signer
+    this._isActive = true
   }
+
+  get isActive () { return this._isActive }
 
   /**
    * The derivation path's index of this account.
@@ -151,41 +155,9 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
 
     // Build, sign and broadcast raw transaction using the signer
     const from = await this.getAddress()
-    const { chainId } = await this._provider.getNetwork()
-
-    const nonce = tx.nonce ?? await this._provider.getTransactionCount(from, 'pending')
-    let gasLimit = tx.gasLimit
-    if (gasLimit == null) {
-      gasLimit = await this._provider.estimateGas({ from, ...tx })
-    }
-    const feeData = await this._provider.getFeeData()
-
-    const usesLegacy = tx.gasPrice != null
-    const unsignedTx = usesLegacy
-      ? {
-          to: tx.to,
-          value: tx.value ?? 0,
-          data: tx.data ?? '0x',
-          nonce,
-          gasPrice: tx.gasPrice,
-          gasLimit,
-          chainId
-        }
-      : {
-          to: tx.to,
-          value: tx.value ?? 0,
-          data: tx.data ?? '0x',
-          nonce,
-          gasLimit,
-          maxFeePerGas: tx.maxFeePerGas ?? feeData.maxFeePerGas,
-          maxPriorityFeePerGas: tx.maxPriorityFeePerGas ?? feeData.maxPriorityFeePerGas,
-          chainId,
-          type: 2
-        }
-
+    const unsignedTx = await populateTransactionEvm(this._provider, from, tx)
     const signed = await this._signer.signTransaction(unsignedTx)
     const hash = await this._provider.send('eth_sendRawTransaction', [signed])
-
     return { hash, fee }
   }
 
@@ -265,21 +237,6 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
    */
   dispose () {
     this._signer.dispose()
-    this._signer = undefined
-  }
-
-  /**
-   * Legacy helper to create an account from seed + path.
-   * Creates a root signer from the seed and derives a child for the given path.
-   *
-   * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
-   * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
-   * @param {EvmWalletConfig} [config] - The configuration object.
-   * @returns {WalletAccountEvm}
-   */
-  static fromSeed (seed, path, config = {}) {
-    const root = new SeedSignerEvm(seed, config, {})
-    const signer = root.derive(path, config)
-    return new WalletAccountEvm(signer, config)
+    this._isActive = false
   }
 }

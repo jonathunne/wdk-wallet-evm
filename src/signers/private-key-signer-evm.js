@@ -60,5 +60,3 @@ export default class PrivateKeySignerEvm {
     this._wallet = undefined
   }
 }
-
-

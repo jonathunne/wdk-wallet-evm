@@ -31,6 +31,7 @@ export default class SeedSignerEvm {
     this._account = undefined
     this._address = undefined
     this._path = undefined
+    this._isActive = true
 
     if (opts.path) {
       const fullPath = `${BIP_44_ETH_DERIVATION_PATH_PREFIX}/${opts.path}`
@@ -42,6 +43,8 @@ export default class SeedSignerEvm {
     }
   }
 
+  get isActive () { return this._isActive }
+
   static fromSeed (seed, config = {}) {
     return new SeedSignerEvm(seed, config, {})
   }
@@ -52,7 +55,9 @@ export default class SeedSignerEvm {
     if (!this._path) return undefined
     return +this._path.split('/').pop()
   }
+
   get path () { return this._path }
+
   get config () { return this._config }
   get address () { return this._address }
   get keyPair () {
@@ -100,9 +105,7 @@ export default class SeedSignerEvm {
   dispose () {
     if (this._account) this._account.dispose()
     if (this._root) this._root.dispose()
-    this._account = undefined
     this._root = undefined
+    this._isActive = false
   }
 }
-
-
