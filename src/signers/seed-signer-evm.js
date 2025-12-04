@@ -7,6 +7,53 @@ import MemorySafeHDNodeWallet from '../memory-safe/hd-node-wallet.js'
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 
+/** @implements {ISigner} */
+export class ISignerEvm {
+  get isActive () {
+    throw new Error('Not implemented')
+  }
+
+  get index () {
+    throw new Error('Not implemented')
+  }
+
+  get path () {
+    throw new Error('Not implemented')
+  }
+
+  get config () {
+    throw new Error('Not implemented')
+  }
+
+  get address () {
+    throw new Error('Not implemented')
+  }
+
+  derive (relPath, cfg = {}) {
+    throw new Error('Not implemented')
+  }
+
+  sign (message) {
+    throw new Error('Not implemented')
+  }
+
+  verify (message, signature) {
+    throw new Error('Not implemented')
+  }
+
+  signTransaction (unsignedTx) {
+    throw new Error('Not implemented')
+  }
+
+  signTypedData (domain, types, message) {
+    throw new Error('Not implemented')
+  }
+
+  dispose () {
+    throw new Error('Not implemented')
+  }
+}
+
 export default class SeedSignerEvm {
   constructor (seed, config = {}, opts = {}) {
     // If a root is provided, do not expect a seed
@@ -44,10 +91,6 @@ export default class SeedSignerEvm {
   }
 
   get isActive () { return this._isActive }
-
-  static fromSeed (seed, config = {}) {
-    return new SeedSignerEvm(seed, config, {})
-  }
 
   get isRoot () { return this._isRoot }
   get isPrivateKey () { return false }
