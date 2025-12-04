@@ -4,53 +4,54 @@ import { verifyMessage } from 'ethers'
 import * as bip39 from 'bip39'
 
 import MemorySafeHDNodeWallet from '../memory-safe/hd-node-wallet.js'
+import { NotImplementedError } from '@tetherto/wdk-wallet'
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 
 /** @implements {ISigner} */
 export class ISignerEvm {
   get isActive () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('isActive')
   }
 
   get index () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('index')
   }
 
   get path () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('path')
   }
 
   get config () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('config')
   }
 
   get address () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('address')
   }
 
   derive (relPath, cfg = {}) {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('derive(relPath, cfg = {})')
   }
 
   sign (message) {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('sign(message)')
   }
 
   verify (message, signature) {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('verify(message, signature)')
   }
 
   signTransaction (unsignedTx) {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('signTransaction(unsignedTx)')
   }
 
   signTypedData (domain, types, message) {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('signTypedData(domain, types, message)')
   }
 
   dispose () {
-    throw new Error('Not implemented')
+    throw new NotImplementedError('dispose()')
   }
 }
 
