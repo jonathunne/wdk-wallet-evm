@@ -11,6 +11,8 @@ import { SignerEthBuilder } from '@ledgerhq/device-signer-kit-ethereum'
 import { filter, firstValueFrom, map } from 'rxjs'
 import { verifyMessage, Signature, Transaction, getBytes } from 'ethers'
 
+const BIP_44_ETH_DERIVATION_PATH_PREFIX = "44'/60'"
+
 /**
  * @implements {ISignerEvm}
  */
@@ -64,6 +66,7 @@ export default class LedgerSignerEvm {
         this._isActive = true
       },
       error: (e) => {
+        console.log(e)
         throw new Error(e)
       }
     })
@@ -110,7 +113,7 @@ export default class LedgerSignerEvm {
   async sign (message) {
     if (!this._account) throw new Error('Ledger is not connected yet.')
 
-    const { observable } = signer.signMessage(this._path, message)
+    const { observable } = this._account.signMessage(this._path, message)
     const { r, s, v } = await firstValueFrom(
       observable.pipe(
         filter((evt) => evt.status === DeviceActionStatus.Completed),
@@ -132,7 +135,7 @@ export default class LedgerSignerEvm {
 
     const tx = Transaction.from(unsignedTx)
 
-    const { observable: signTransaction } = signer.signTransaction(
+    const { observable: signTransaction } = this._account.signTransaction(
       this._path,
       getBytes(tx.unsignedSerialized)
     )
@@ -154,7 +157,7 @@ export default class LedgerSignerEvm {
 
     const [[primaryType]] = Object.entries(types)
 
-    const { observable } = signer.signTypedData(this._path, {
+    const { observable } = this._account.signTypedData(this._path, {
       domain,
       types,
       message,
