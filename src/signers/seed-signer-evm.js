@@ -34,19 +34,23 @@ export class ISignerEvm {
     throw new NotImplementedError('derive(relPath, cfg = {})')
   }
 
-  sign (message) {
+  async getAddress () {
+    throw new NotImplementedError('getAddress(message)')
+  }
+
+  async sign (message) {
     throw new NotImplementedError('sign(message)')
   }
 
-  verify (message, signature) {
+  async verify (message, signature) {
     throw new NotImplementedError('verify(message, signature)')
   }
 
-  signTransaction (unsignedTx) {
+  async signTransaction (unsignedTx) {
     throw new NotImplementedError('signTransaction(unsignedTx)')
   }
 
-  signTypedData (domain, types, message) {
+  async signTypedData (domain, types, message) {
     throw new NotImplementedError('signTypedData(domain, types, message)')
   }
 
@@ -75,7 +79,8 @@ export default class SeedSignerEvm {
 
     this._config = config
     this._isRoot = true
-    this._root = opts.root || (seed ? MemorySafeHDNodeWallet.fromSeed(seed) : undefined)
+    this._root =
+      opts.root || (seed ? MemorySafeHDNodeWallet.fromSeed(seed) : undefined)
     this._account = undefined
     this._address = undefined
     this._path = undefined
@@ -91,19 +96,35 @@ export default class SeedSignerEvm {
     }
   }
 
-  get isActive () { return this._isActive }
+  get isActive () {
+    return this._isActive
+  }
 
-  get isRoot () { return this._isRoot }
-  get isPrivateKey () { return false }
+  get isRoot () {
+    return this._isRoot
+  }
+
+  get isPrivateKey () {
+    return false
+  }
+
   get index () {
     if (!this._path) return undefined
     return +this._path.split('/').pop()
   }
 
-  get path () { return this._path }
+  get path () {
+    return this._path
+  }
 
-  get config () { return this._config }
-  get address () { return this._address }
+  get config () {
+    return this._config
+  }
+
+  get address () {
+    return this._address
+  }
+
   get keyPair () {
     return {
       privateKey: this._account ? this._account.privateKeyBuffer : null,
@@ -114,7 +135,9 @@ export default class SeedSignerEvm {
   derive (relPath, cfg = {}) {
     const merged = {
       ...this._config,
-      ...Object.fromEntries(Object.entries(cfg || {}).filter(([, v]) => v !== undefined))
+      ...Object.fromEntries(
+        Object.entries(cfg || {}).filter(([, v]) => v !== undefined)
+      )
     }
     return new SeedSignerEvm(null, merged, { root: this._root, path: relPath })
   }
@@ -134,14 +157,18 @@ export default class SeedSignerEvm {
 
   async signTransaction (unsignedTx) {
     if (!this._account) {
-      throw new Error('Cannot sign transactions from a root signer. Derive a child first.')
+      throw new Error(
+        'Cannot sign transactions from a root signer. Derive a child first.'
+      )
     }
     return this._account.signTransaction(unsignedTx)
   }
 
   async signTypedData (domain, types, message) {
     if (!this._account) {
-      throw new Error('Cannot sign typed data from a root signer. Derive a child first.')
+      throw new Error(
+        'Cannot sign typed data from a root signer. Derive a child first.'
+      )
     }
     return this._account.signTypedData(domain, types, message)
   }

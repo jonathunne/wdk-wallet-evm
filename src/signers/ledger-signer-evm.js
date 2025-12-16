@@ -14,6 +14,10 @@ import { verifyMessage, Signature, Transaction, getBytes } from 'ethers'
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "44'/60'"
 
 /**
+ * @typedef {import("@ledgerhq/device-management-kit").DeviceManagementKit} DeviceManagementKit
+ */
+
+/**
  * @implements {ISignerEvm}
  */
 export default class LedgerSignerEvm {
@@ -30,46 +34,13 @@ export default class LedgerSignerEvm {
     this._isActive = false
 
     /**
-     * Discover & connect a device
+     * @type {DeviceManagementKit}
      */
-
     this._dmk =
       opts.dmk ||
       new DeviceManagementKitBuilder()
         .addTransport(webHidTransportFactory)
         .build()
-
-    this._dmk.startDiscovering({}).subscribe({
-      next: async (device) => {
-        this._sessionId = await this._dmk.connect({
-          device,
-          sessionRefresherOptions: { isRefresherDisabled: true }
-        })
-
-        // Create a hardware signer
-        this._account = new SignerEthBuilder({
-          dmk: this._dmk,
-          sessionId: this._sessionId
-        }).build()
-
-        // Get the extended pubkey
-        const { observable } = this._account.getAddress(this._path)
-        const address = await firstValueFrom(
-          observable.pipe(
-            filter((evt) => evt.status === DeviceActionStatus.Completed),
-            map((evt) => evt.output.address)
-          )
-        )
-
-        // Active
-        this._address = address
-        this._isActive = true
-      },
-      error: (e) => {
-        console.log(e)
-        throw new Error(e)
-      }
-    })
   }
 
   get isActive () {
@@ -90,7 +61,41 @@ export default class LedgerSignerEvm {
   }
 
   get address () {
+    if (!this._account) throw new Error('Ledger is not connected yet.')
     return this._address
+  }
+
+  /**
+   * Discover and connect the device
+   *
+   * @private
+   */
+  async _connect () {
+    // Discover & Connect the device
+    const device = await firstValueFrom(this._dmk.startDiscovering({}))
+    this._sessionId = await this._dmk.connect({
+      device,
+      sessionRefresherOptions: { isRefresherDisabled: true }
+    })
+
+    // Create a hardware signer
+    this._account = new SignerEthBuilder({
+      dmk: this._dmk,
+      sessionId: this._sessionId
+    }).build()
+
+    // Get the extended pubkey
+    const { observable } = this._account.getAddress(this._path)
+    const address = await firstValueFrom(
+      observable.pipe(
+        filter((evt) => evt.status === DeviceActionStatus.Completed),
+        map((evt) => evt.output.address)
+      )
+    )
+
+    // Active
+    this._address = address
+    this._isActive = true
   }
 
   derive (relPath, cfg = {}) {
@@ -110,8 +115,13 @@ export default class LedgerSignerEvm {
     return new LedgerSignerEvm(`${path}/${relPath}`, mergedCfg, mergedOpts)
   }
 
+  async getAddress () {
+    if (!this._account) await this._connect()
+    return this._address
+  }
+
   async sign (message) {
-    if (!this._account) throw new Error('Ledger is not connected yet.')
+    if (!this._account) await this._connect()
 
     const { observable } = this._account.signMessage(this._path, message)
     const { r, s, v } = await firstValueFrom(
@@ -131,7 +141,7 @@ export default class LedgerSignerEvm {
   }
 
   async signTransaction (unsignedTx) {
-    if (!this._account) throw new Error('Ledger is not connected yet.')
+    if (!this._account) await this._connect()
 
     const tx = Transaction.from(unsignedTx)
 
@@ -153,7 +163,7 @@ export default class LedgerSignerEvm {
   }
 
   async signTypedData (domain, types, message) {
-    if (!this._account) throw new Error('Ledger is not connected yet.')
+    if (!this._account) await this._connect()
 
     const [[primaryType]] = Object.entries(types)
 
@@ -174,7 +184,7 @@ export default class LedgerSignerEvm {
   }
 
   dispose () {
-    this._dmk.disconnect({ sessionId: this._sessionId })
+    if (this._account) this._dmk.disconnect({ sessionId: this._sessionId })
 
     this._account = undefined
     this._dmk = undefined
