@@ -219,7 +219,7 @@ export default class LedgerSignerEvm {
       dmk: this._dmk
     }
 
-    return new LedgerSignerEvm(`${this._path}/${relPath}`, mergedCfg, mergedOpts)
+    return new LedgerSignerEvm(`${relPath}`, mergedCfg, mergedOpts)
   }
 
   async getAddress () {
