@@ -263,6 +263,7 @@ export default class LedgerSignerEvm {
     if (!this._account) await this._connect()
     await this._ensureDeviceReady('transaction signing')
 
+    delete unsignedTx.from // Ledger does not support signing transactions with the from field
     const tx = Transaction.from(unsignedTx)
 
     const attempt = async () => {

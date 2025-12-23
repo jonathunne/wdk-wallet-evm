@@ -167,9 +167,7 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
     if (!this._provider) {
       throw new Error('The wallet must be connected to a provider to send transactions.')
     }
-
     const { fee } = await this.quoteSendTransaction(tx)
-
     // Build, sign and broadcast raw transaction using the signer
     const from = await this.getAddress()
     const unsignedTx = await populateTransactionEvm(this._provider, from, tx)
