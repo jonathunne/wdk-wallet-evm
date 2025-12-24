@@ -16,9 +16,7 @@
  * Barrel exports for EVM signers.
  *
  * - `SeedSignerEvm`: derives accounts from a BIP-39 seed (BIP-44 path).
- * - `LedgerSignerEvm`: hardware signer via Ledger DMK + WebHID.
  * - `PrivateKeySignerEvm`: memory-safe wrapper around a raw private key.
  */
 export { default, default as SeedSignerEvm } from './seed-signer-evm.js'
-export { default as LedgerSignerEvm } from './ledger-signer-evm.js'
 export { default as PrivateKeySignerEvm } from './private-key-signer-evm.js'

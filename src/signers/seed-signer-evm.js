@@ -23,7 +23,11 @@ const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 /** @typedef {import('../wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 /** @typedef {import('../utils/tx-populator-evm.js').UnsignedEvmTransaction} UnsignedEvmTransaction */
 
-/** @implements {ISigner} */
+/**
+ * Interface for EVM signers.
+ * @implements {ISigner}
+ * @interface
+ */
 export class ISignerEvm {
   /**
    * True if the signer is currently active and usable.

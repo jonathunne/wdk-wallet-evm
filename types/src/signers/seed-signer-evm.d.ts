@@ -1,6 +1,10 @@
 /** @typedef {import('../wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 /** @typedef {import('../utils/tx-populator-evm.js').UnsignedEvmTransaction} UnsignedEvmTransaction */
-/** @implements {ISigner} */
+/**
+ * Interface for EVM signers.
+ * @implements {ISigner}
+ * @interface
+ */
 export class ISignerEvm implements ISigner {
     /**
      * True if the signer is currently active and usable.
@@ -54,7 +58,7 @@ export class ISignerEvm implements ISigner {
     dispose(): void;
 }
 /**
- * * @implements {ISignerEvm}
+ * @implements {ISignerEvm}
  * Signer implementation that derives keys from a BIP-39 seed using the BIP-44 Ethereum path.
  * Can represent either a root (no address, only derivation) or a child (derived account with address).
  */

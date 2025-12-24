@@ -61,6 +61,10 @@
       "types": "./types/src/signers/index.d.ts",
       "default": "./src/signers/index.js"
     },
+    "./signers/ledger": {
+      "types": "./types/src/signers/ledger-signer-evm.d.ts",
+      "default": "./src/signers/ledger-signer-evm.js"
+    },
     "./package": {
       "default": "./package.json"
     }
