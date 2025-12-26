@@ -84,6 +84,15 @@ export default class LedgerSignerEvm {
   }
 
   /**
+   * Ledger-backed signers do not expose private keys; key pairs are not available.
+   *
+   * @throws {Error} Always throws to indicate unavailability on Ledger.
+   */
+  get keyPair () {
+    throw new Error('Key pair is not available for Ledger signer.')
+  }
+
+  /**
    * Disconnect current session if any.
    *
    * @private
