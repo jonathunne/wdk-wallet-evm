@@ -131,6 +131,18 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
   }
 
   /**
+   * Signs typed data according to EIP-712.
+   *
+   * @param {import('ethers').TypedDataDomain} domain - The domain separator.
+   * @param {Record<string, import('ethers').TypedDataField[]>} types - The type definitions.
+   * @param {Record<string, any>} value - The value to sign.
+   * @returns {Promise<string>} The typed data signature.
+   */
+  async signTypedData (domain, types, value) {
+    return await this._account.signTypedData(domain, types, value)
+  }
+
+  /**
    * Sends a transaction.
    *
    * @param {EvmTransaction} tx - The transaction.

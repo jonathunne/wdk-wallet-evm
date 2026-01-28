@@ -16,7 +16,7 @@
 
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
 
-import { BrowserProvider, Contract, JsonRpcProvider, verifyMessage } from 'ethers'
+import { BrowserProvider, Contract, JsonRpcProvider, verifyMessage, verifyTypedData } from 'ethers'
 
 /** @typedef {import('ethers').Provider} Provider */
 /** @typedef {import('ethers').Eip1193Provider} Eip1193Provider */
@@ -193,6 +193,22 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
    */
   async verify (message, signature) {
     const address = await verifyMessage(message, signature)
+    const accountAddress = await this.getAddress()
+
+    return address.toLowerCase() === accountAddress.toLowerCase()
+  }
+
+  /**
+   * Verifies a typed data signature.
+   *
+   * @param {import('ethers').TypedDataDomain} domain - The domain separator.
+   * @param {Record<string, import('ethers').TypedDataField[]>} types - The type definitions.
+   * @param {Record<string, any>} value - The value to verify.
+   * @param {string} signature - The signature to verify.
+   * @returns {Promise<boolean>} True if the signature is valid.
+   */
+  async verifyTypedData (domain, types, value, signature) {
+    const address = verifyTypedData(domain, types, value, signature)
     const accountAddress = await this.getAddress()
 
     return address.toLowerCase() === accountAddress.toLowerCase()
