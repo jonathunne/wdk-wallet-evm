@@ -33,9 +33,8 @@ import MemorySafeHDNodeWallet from './memory-safe/hd-node-wallet.js'
 
 /** @typedef {import('./wallet-account-read-only-evm.js').EvmTransaction} EvmTransaction */
 /** @typedef {import('./wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
-
-/** @typedef {import('ethers').TypedDataDomain} TypedDataDomain */
-/** @typedef {import('ethers').TypedDataField} TypedDataField */
+/** @typedef {import('./wallet-account-read-only-evm.js').TypedDataDomain} TypedDataDomain */
+/** @typedef {import('./wallet-account-read-only-evm.js').TypedDataField} TypedDataField */
 
 /**
  * @typedef {Object} ApproveOptions

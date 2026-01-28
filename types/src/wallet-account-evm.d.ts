@@ -90,8 +90,6 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm implement
     dispose(): void;
 }
 export type HDNodeWallet = import("ethers").HDNodeWallet;
-export type TypedDataDomain = import("ethers").TypedDataDomain;
-export type TypedDataField = import("ethers").TypedDataField;
 export type IWalletAccount = import("@tetherto/wdk-wallet").IWalletAccount;
 export type KeyPair = import("@tetherto/wdk-wallet").KeyPair;
 export type TransactionResult = import("@tetherto/wdk-wallet").TransactionResult;
@@ -99,6 +97,8 @@ export type TransferOptions = import("@tetherto/wdk-wallet").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet").TransferResult;
 export type EvmTransaction = import("./wallet-account-read-only-evm.js").EvmTransaction;
 export type EvmWalletConfig = import("./wallet-account-read-only-evm.js").EvmWalletConfig;
+export type TypedDataDomain = import("./wallet-account-read-only-evm.js").TypedDataDomain;
+export type TypedDataField = import("./wallet-account-read-only-evm.js").TypedDataField;
 export type ApproveOptions = {
     /**
      * The address of the token to approve.
