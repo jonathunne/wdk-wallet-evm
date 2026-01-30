@@ -136,13 +136,15 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
   /**
    * Signs typed data according to EIP-712.
    *
-   * @param {TypedDataDomain} domain - The domain separator.
-   * @param {Record<string, TypedDataField[]>} types - The type definitions.
-   * @param {Record<string, any>} value - The value to sign.
+   * @param {Object} typedData - The typed data to sign.
+   * @param {Record<string, unknown>} typedData.domain - The domain separator.
+   * @param {Record<string, unknown>} typedData.types - The type definitions.
+   * @param {string} typedData.primaryType - The primary type.
+   * @param {Record<string, unknown>} typedData.message - The message to sign.
    * @returns {Promise<string>} The typed data signature.
    */
-  async signTypedData (domain, types, value) {
-    return await this._account.signTypedData(domain, types, value)
+  async signTypedData ({ domain, types, primaryType, message }) {
+    return await this._account.signTypedData(domain, types, message)
   }
 
   /**

@@ -204,14 +204,16 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
   /**
    * Verifies a typed data signature.
    *
-   * @param {TypedDataDomain} domain - The domain separator.
-   * @param {Record<string, TypedDataField[]>} types - The type definitions.
-   * @param {Record<string, any>} value - The value to verify.
-   * @param {string} signature - The signature to verify.
+   * @param {Object} typedData - The typed data to verify.
+   * @param {Record<string, unknown>} typedData.domain - The domain separator.
+   * @param {Record<string, unknown>} typedData.types - The type definitions.
+   * @param {string} typedData.primaryType - The primary type.
+   * @param {Record<string, unknown>} typedData.message - The message to verify.
+   * @param {string} typedData.signature - The signature to verify.
    * @returns {Promise<boolean>} True if the signature is valid.
    */
-  async verifyTypedData (domain, types, value, signature) {
-    const address = verifyTypedData(domain, types, value, signature)
+  async verifyTypedData ({ domain, types, primaryType, message, signature }) {
+    const address = verifyTypedData(domain, types, message, signature)
     const accountAddress = await this.getAddress()
 
     return address.toLowerCase() === accountAddress.toLowerCase()

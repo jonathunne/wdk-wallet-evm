@@ -258,7 +258,7 @@ describe('WalletAccountReadOnlyEvm', () => {
       ]
     }
 
-    const VALUE = {
+    const MESSAGE = {
       from: {
         name: 'Alice',
         wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
@@ -273,19 +273,37 @@ describe('WalletAccountReadOnlyEvm', () => {
     const SIGNATURE = '0xd5d54d9a7fe501ab5dc1532a443a4f70bc8b6ad1c3f09caac9b891efa8701cac5ad1d4830c7bc7ed2688965ed6b04d25e8f55906a843689fdf79100aee3a5dc71c'
 
     test('should return true for a valid signature', async () => {
-      const result = await account.verifyTypedData(DOMAIN, TYPES, VALUE, SIGNATURE)
+      const result = await account.verifyTypedData({
+        domain: DOMAIN,
+        types: TYPES,
+        primaryType: 'Mail',
+        message: MESSAGE,
+        signature: SIGNATURE
+      })
 
       expect(result).toBe(true)
     })
 
     test('should return false for an invalid signature', async () => {
-      const result = await account.verifyTypedData(DOMAIN, TYPES, { ...VALUE, contents: 'Hello, Alice!' }, SIGNATURE)
+      const result = await account.verifyTypedData({
+        domain: DOMAIN,
+        types: TYPES,
+        primaryType: 'Mail',
+        message: { ...MESSAGE, contents: 'Hello, Alice!' },
+        signature: SIGNATURE
+      })
 
       expect(result).toBe(false)
     })
 
     test('should throw on a malformed signature', async () => {
-      await expect(account.verifyTypedData(DOMAIN, TYPES, VALUE, 'A bad signature'))
+      await expect(account.verifyTypedData({
+        domain: DOMAIN,
+        types: TYPES,
+        primaryType: 'Mail',
+        message: MESSAGE,
+        signature: 'A bad signature'
+      }))
         .rejects.toThrow('invalid BytesLike value')
     })
   })
