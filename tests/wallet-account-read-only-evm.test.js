@@ -56,6 +56,12 @@ describe('WalletAccountReadOnlyEvm', () => {
     await hre.network.provider.send('hardhat_reset')
   })
 
+  describe('address', () => {
+    test('should return the correct address', () => {
+      expect(account.address).toBe(ADDRESS)
+    })
+  })
+
   describe('getBalance', () => {
     test('should return the correct balance of the account', async () => {
       const balance = await account.getBalance()

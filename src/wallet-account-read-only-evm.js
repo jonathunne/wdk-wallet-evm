@@ -88,6 +88,15 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
   }
 
   /**
+   * The account's address.
+   *
+   * @type {string}
+   */
+  get address () {
+    return this._address
+  }
+
+  /**
    * Returns the account's eth balance.
    *
    * @returns {Promise<bigint>} The eth balance (in weis).
