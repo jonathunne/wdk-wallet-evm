@@ -80,16 +80,32 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
     /**
      * Verifies a typed data signature.
      *
-     * @param {TypedDataDomain} domain - The domain separator.
-     * @param {Record<string, TypedDataField[]>} types - The type definitions.
-     * @param {Record<string, any>} value - The value to verify.
+     * @param {TypedData} typedData - The typed data to verify.
      * @param {string} signature - The signature to verify.
      * @returns {Promise<boolean>} True if the signature is valid.
      */
-    verifyTypedData(domain: TypedDataDomain, types: Record<string, TypedDataField[]>, value: Record<string, any>, signature: string): Promise<boolean>;
+    verifyTypedData(typedData: TypedData, signature: string): Promise<boolean>;
 }
 export type TypedDataDomain = import("ethers").TypedDataDomain;
 export type TypedDataField = import("ethers").TypedDataField;
+export type TypedData = {
+    /**
+     * - The domain separator.
+     */
+    domain: Record<string, unknown>;
+    /**
+     * - The type definitions.
+     */
+    types: Record<string, unknown>;
+    /**
+     * - The primary type.
+     */
+    primaryType: string;
+    /**
+     * - The message data.
+     */
+    message: Record<string, unknown>;
+};
 export type Provider = import("ethers").Provider;
 export type Eip1193Provider = import("ethers").Eip1193Provider;
 export type EvmTransactionReceipt = import("ethers").TransactionReceipt;

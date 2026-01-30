@@ -30,6 +30,14 @@ import { BrowserProvider, Contract, JsonRpcProvider, verifyMessage, verifyTypedD
 /** @typedef {import('ethers').TypedDataField} TypedDataField */
 
 /**
+ * @typedef {Object} TypedData
+ * @property {Record<string, unknown>} domain - The domain separator.
+ * @property {Record<string, unknown>} types - The type definitions.
+ * @property {string} primaryType - The primary type.
+ * @property {Record<string, unknown>} message - The message data.
+ */
+
+/**
  * @typedef {Object} EvmTransaction
  * @property {string} to - The transaction's recipient.
  * @property {number | bigint} value - The amount of ethers to send to the recipient (in weis).
@@ -204,14 +212,13 @@ export default class WalletAccountReadOnlyEvm extends WalletAccountReadOnly {
   /**
    * Verifies a typed data signature.
    *
-   * @param {TypedDataDomain} domain - The domain separator.
-   * @param {Record<string, TypedDataField[]>} types - The type definitions.
-   * @param {Record<string, any>} value - The value to verify.
+   * @param {TypedData} typedData - The typed data to verify.
    * @param {string} signature - The signature to verify.
    * @returns {Promise<boolean>} True if the signature is valid.
    */
-  async verifyTypedData (domain, types, value, signature) {
-    const address = verifyTypedData(domain, types, value, signature)
+  async verifyTypedData (typedData, signature) {
+    const { domain, types, message } = typedData
+    const address = verifyTypedData(domain, types, message, signature)
     const accountAddress = await this.getAddress()
 
     return address.toLowerCase() === accountAddress.toLowerCase()

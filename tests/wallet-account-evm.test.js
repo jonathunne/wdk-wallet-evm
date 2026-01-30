@@ -148,7 +148,7 @@ describe('WalletAccountEvm', () => {
       ]
     }
 
-    const VALUE = {
+    const MESSAGE = {
       from: {
         name: 'Alice',
         wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
@@ -163,7 +163,12 @@ describe('WalletAccountEvm', () => {
     const EXPECTED_SIGNATURE = '0xd5d54d9a7fe501ab5dc1532a443a4f70bc8b6ad1c3f09caac9b891efa8701cac5ad1d4830c7bc7ed2688965ed6b04d25e8f55906a843689fdf79100aee3a5dc71c'
 
     test('should return the correct signature', async () => {
-      const signature = await account.signTypedData(DOMAIN, TYPES, VALUE)
+      const signature = await account.signTypedData({
+        domain: DOMAIN,
+        types: TYPES,
+        primaryType: 'Mail',
+        message: MESSAGE
+      })
 
       expect(signature).toBe(EXPECTED_SIGNATURE)
     })
