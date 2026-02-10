@@ -98,15 +98,11 @@ export type TypedData = {
     /**
      * - The domain separator.
      */
-    domain: Record<string, unknown>;
+    domain: TypedDataDomain;
     /**
      * - The type definitions.
      */
-    types: Record<string, unknown>;
-    /**
-     * - The primary type.
-     */
-    primaryType: string;
+    types: Record<string, TypedDataField[]>;
     /**
      * - The message data.
      */

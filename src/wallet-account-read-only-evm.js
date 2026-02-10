@@ -31,9 +31,8 @@ import { BrowserProvider, Contract, JsonRpcProvider, verifyMessage, verifyTypedD
 
 /**
  * @typedef {Object} TypedData
- * @property {Record<string, unknown>} domain - The domain separator.
- * @property {Record<string, unknown>} types - The type definitions.
- * @property {string} primaryType - The primary type.
+ * @property {TypedDataDomain} domain - The domain separator.
+ * @property {Record<string, TypedDataField[]>} types - The type definitions.
  * @property {Record<string, unknown>} message - The message data.
  */
 
