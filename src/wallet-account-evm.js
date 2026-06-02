@@ -158,6 +158,14 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
    * @returns {Promise<string>} The signed transaction as a hex string.
    */
   async signTransaction (tx) {
+    if (this._account.provider && this._config.transactionMaxFee !== undefined) {
+      const { fee } = await this.quoteSendTransaction(tx)
+
+      if (fee >= this._config.transactionMaxFee) {
+        throw new Error('Exceeded maximum fee cost for transaction operation.')
+      }
+    }
+
     return await this._account.signTransaction({
       from: await this.getAddress(),
       ...tx
@@ -176,6 +184,10 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
     }
 
     const { fee } = await this.quoteSendTransaction(tx)
+
+    if (this._config.transactionMaxFee !== undefined && fee >= this._config.transactionMaxFee) {
+      throw new Error('Exceeded maximum fee cost for transaction operation.')
+    }
 
     const { hash } = await this._account.sendTransaction({
       from: await this.getAddress(),
