@@ -280,7 +280,7 @@ describe('@tetherto/wdk-wallet-evm', () => {
     }
 
     for (const account of [account0, account1]) {
-      expect(account.keyPair.privateKey).toBeNull()
+      expect(account.keyPair.privateKey).toBe(null)
 
       await expect(account.sign(MESSAGE)).rejects.toThrow()
       await expect(account.sendTransaction(TRANSACTION)).rejects.toThrow()
