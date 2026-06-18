@@ -59,10 +59,11 @@ export default class PrivateKeySignerEvm extends ISignerEvm {
   }
 
   /**
-   * Whether this signer was created from a standalone private key.
+   * Whether this signer can derive child signers. Always false: a private-key signer is a
+   * single standalone account and is bound directly to a wallet account.
    * @type {boolean}
    */
-  get isPrivateKey () { return true }
+  get isDerivable () { return false }
 
   /**
    * The account index. Always undefined for private key signers: a raw key has no
@@ -95,9 +96,10 @@ export default class PrivateKeySignerEvm extends ISignerEvm {
 
   /**
    * PrivateKeySignerEvm is not a hierarchical signer and cannot derive.
+   * @returns {Promise<never>}
    * @throws {SignerError} Always — private-key signers do not support derivation.
    */
-  derive () {
+  async derive () {
     throw new SignerError('PrivateKeySignerEvm does not support derivation.')
   }
 

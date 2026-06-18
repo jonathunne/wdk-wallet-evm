@@ -20,7 +20,9 @@ export default class WalletManagerEvm extends WalletManager {
      * Creates a new wallet manager for evm blockchains.
      *
      * Accepts either a BIP-39 seed (string/Uint8Array) for backwards compatibility, or a
-     * pre-built root signer object. Private key signers are not supported.
+     * pre-built root signer object. The default signer must be derivable (it must be able to
+     * derive child accounts); non-derivable signers (e.g. private-key signers) are not allowed
+     * as the default but may be registered by name via {@link addSigner} - If not adding to your global account managment for using just one non derivable signer create a standalone account.
      *
      * @param {string|Uint8Array|ISignerEvm} seedOrSigner - A BIP-39 seed phrase, seed bytes, or a root signer.
      * @param {EvmWalletConfig} [config] - The configuration object.
@@ -48,7 +50,8 @@ export default class WalletManagerEvm extends WalletManager {
     }): Promise<WalletAccountEvm>;
     /**
      * Returns the wallet account associated with a registered signer. Non-derivable
-     * signers (e.g. private-key signers) , returns the signer's single account, deriable signers derive an account at the path "0'/0/0"
+     * signers (e.g. private-key signers) return the signer's single account; derivable signers
+     * derive a detached child at the signer's own account (the root is never handed out).
      *
      * @param {string} signerName - The signer name registered via {@link addSigner}.
      * @returns {Promise<WalletAccountEvm>} The account.

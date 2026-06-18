@@ -24,7 +24,7 @@ export default class PrivateKeySignerEvm extends ISignerEvm {
     /** @private */
     private _path;
     /** @type {boolean} */
-    get isPrivateKey(): boolean;
+    get isDerivable(): boolean;
     /** @type {number|undefined} */
     get index(): number | undefined;
     /** @type {string|undefined} */
@@ -38,9 +38,10 @@ export default class PrivateKeySignerEvm extends ISignerEvm {
     get keyPair(): KeyPair;
     /**
      * PrivateKeySignerEvm is not a hierarchical signer and cannot derive.
+     * @returns {Promise<never>}
      * @throws {SignerError} Always — private-key signers do not support derivation.
      */
-    derive(): never;
+    derive(): Promise<never>;
     /** @returns {Promise<string>} */
     getAddress(): Promise<string>;
     /**

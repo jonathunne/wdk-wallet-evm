@@ -52,7 +52,9 @@ export default class WalletManagerEvm extends WalletManager {
    * Creates a new wallet manager for evm blockchains.
    *
    * Accepts either a BIP-39 seed (string/Uint8Array) for backwards compatibility, or a
-   * pre-built root signer object. Private key signers are not supported.
+   * pre-built root signer object. The default signer must be derivable (it must be able to
+   * derive child accounts); non-derivable signers (e.g. private-key signers) are not allowed
+   * as the default but may be registered by name via {@link addSigner} - If not adding to your global account managment for using just one non derivable signer create a standalone account.
    *
    * @param {string|Uint8Array|ISignerEvm} seedOrSigner - A BIP-39 seed phrase, seed bytes, or a root signer.
    * @param {EvmWalletConfig} [config] - The configuration object.
@@ -62,8 +64,8 @@ export default class WalletManagerEvm extends WalletManager {
     if (typeof seedOrSigner === 'string' || seedOrSigner instanceof Uint8Array) {
       signer = new SeedSignerEvm(seedOrSigner)
     }
-    if (signer.isPrivateKey) {
-      throw new Error('Private key signers are not supported for wallet managers.')
+    if (!signer.isDerivable) {
+      throw new Error('The default signer must be derivable. Non-derivable signers (e.g. private-key signers) can only be registered by name via addSigner.')
     }
     super(signer, config)
 
@@ -120,7 +122,8 @@ export default class WalletManagerEvm extends WalletManager {
 
   /**
    * Returns the wallet account associated with a registered signer. Non-derivable
-   * signers (e.g. private-key signers) , returns the signer's single account, deriable signers derive an account at the path "0'/0/0"
+   * signers (e.g. private-key signers) return the signer's single account; derivable signers
+   * derive a detached child at the signer's own account (the root is never handed out).
    *
    * @overload
    * @param {string} signerName - The signer name registered via {@link addSigner}.
@@ -135,8 +138,9 @@ export default class WalletManagerEvm extends WalletManager {
         return this._accounts[key]
       }
       const signer = this.getSigner(indexOrSignerName)
-      // Never wrap a root signer directly
-      const accountSigner = signer.isPrivateKey ? signer : signer.derive("0'/0/0")
+      const accountSigner = signer.isDerivable
+        ? await signer.derive(signer.path.split('/').slice(-3).join('/'))
+        : signer
       const account = new WalletAccountEvm(accountSigner, this._config)
       this._accounts[key] = account
       return account
@@ -163,7 +167,7 @@ export default class WalletManagerEvm extends WalletManager {
       return this._accounts[key]
     }
     const signer = this.getSigner(signerName)
-    const childSigner = signer.derive(path, this._config)
+    const childSigner = await signer.derive(path)
     const account = new WalletAccountEvm(childSigner, this._config)
     this._accounts[key] = account
     return account

@@ -27,7 +27,6 @@ const DEFAULT_ACCOUNT_PATH = "0'/0/0"
 /** @typedef {import('@tetherto/wdk-wallet').ISigner} ISigner */
 /** @typedef {import('@tetherto/wdk-wallet').SignerError} SignerError */
 /** @typedef {import('@tetherto/wdk-wallet').KeyPair} KeyPair */
-/** @typedef {import('../wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 /** @typedef {import('ethers').AuthorizationRequest} AuthorizationRequest */
 /** @typedef {import('ethers').Authorization} Authorization */
 /** @typedef {import('../wallet-account-read-only-evm.js').TypedData} TypedData */
@@ -48,11 +47,13 @@ const DEFAULT_ACCOUNT_PATH = "0'/0/0"
  */
 export class ISignerEvm extends ISigner {
   /**
-   * Whether this signer was created from a standalone private key.
+   * Whether this signer can derive child signers (i.e. it holds an HD root). Non-derivable
+   * signers (e.g. private-key signers) are bound directly to an account; derivable signers
+   * derive child accounts and keep the root for management only.
    * @type {boolean}
    */
-  get isPrivateKey () {
-    throw new NotImplementedError('isPrivateKey')
+  get isDerivable () {
+    throw new NotImplementedError('isDerivable')
   }
 
   /**
@@ -91,12 +92,11 @@ export class ISignerEvm extends ISigner {
    * Derive a child signer from this signer using a relative path (e.g. "0'/0/0").
    *
    * @param {string} relPath - The relative BIP-44 path segment.
-   * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-   * @returns {ISignerEvm} The derived child signer.
+   * @returns {Promise<ISignerEvm>} The derived child signer.
    * @throws {SignerError} If the signer does not support derivation (e.g. private-key signers).
    */
-  derive (relPath, _cfg) {
-    throw new NotImplementedError('derive(relPath, cfg?)')
+  async derive (relPath) {
+    throw new NotImplementedError('derive(relPath)')
   }
 
   /**
@@ -201,11 +201,12 @@ export default class SeedSignerEvm extends ISignerEvm {
   }
 
   /**
-   * Whether this signer was created from a standalone private key.
+   * Whether this signer can derive child signers. True for a root signer (which holds the
+   * HD root); false for a derived child, which does not retain the root.
    * @type {boolean}
    */
-  get isPrivateKey () {
-    return false
+  get isDerivable () {
+    return Boolean(this._root)
   }
 
   /**
@@ -247,11 +248,10 @@ export default class SeedSignerEvm extends ISignerEvm {
   /**
    * Derive a child signer using the provided relative path (e.g. "0'/0/0").
    * @param {string} relPath
-   * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-   * @returns {SeedSignerEvm}
+   * @returns {Promise<SeedSignerEvm>}
    * @throws {Error} If called on a derived child signer, which does not retain the root.
    */
-  derive (relPath, _cfg) {
+  async derive (relPath) {
     if (!this._root) {
       throw new Error('Cannot derive: this signer has no root (it is a derived child or has been disposed).')
     }

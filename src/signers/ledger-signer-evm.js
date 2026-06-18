@@ -27,7 +27,6 @@ import { ISignerEvm } from './seed-signer-evm.js'
 
 /** @typedef {import('@tetherto/wdk-wallet').KeyPair} KeyPair */
 /** @typedef {import('../utils/tx-populator-evm.js').UnsignedEvmTransaction} UnsignedEvmTransaction */
-/** @typedef {import('../wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 /** @typedef {import('ethers').AuthorizationRequest} AuthorizationRequest */
 /** @typedef {import('ethers').Authorization} Authorization */
 /** @typedef {import('../wallet-account-read-only-evm.js').TypedData} TypedData */
@@ -75,11 +74,12 @@ export default class LedgerSignerEvm extends ISignerEvm {
   }
 
   /**
-   * Whether this signer was created from a standalone private key. Always false for Ledger signers.
+   * Whether this signer can derive child signers. Always true: a Ledger signer can derive
+   * further accounts from the same device session.
    * @type {boolean}
    */
-  get isPrivateKey () {
-    return false
+  get isDerivable () {
+    return true
   }
 
   /**
@@ -255,10 +255,9 @@ export default class LedgerSignerEvm extends ISignerEvm {
    * Derive a new signer at the given relative path, reusing the current device session.
    *
    * @param {string} relPath - Relative BIP-44 path (e.g. "0'/0/1").
-   * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-   * @returns {LedgerSignerEvm} A new hardware-backed signer bound to the derived path.
+   * @returns {Promise<LedgerSignerEvm>} A new hardware-backed signer bound to the derived path.
    */
-  derive (relPath, _cfg) {
+  async derive (relPath) {
     return new LedgerSignerEvm(relPath, this._dmk)
   }
 

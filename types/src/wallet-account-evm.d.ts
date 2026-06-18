@@ -7,9 +7,9 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm implement
      * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
      * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
      * @param {EvmWalletConfig} [config] - The configuration object.
-     * @returns {WalletAccountEvm}
+     * @returns {Promise<WalletAccountEvm>}
      */
-    static fromSeed(seed: string | Uint8Array, path: string, config?: EvmWalletConfig): WalletAccountEvm;
+    static fromSeed(seed: string | Uint8Array, path: string, config?: EvmWalletConfig): Promise<WalletAccountEvm>;
     /**
      * Creates a new evm wallet account using a signer.
      *

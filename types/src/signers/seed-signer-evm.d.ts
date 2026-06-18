@@ -1,5 +1,4 @@
 import { ISigner } from "@tetherto/wdk-wallet";
-/** @typedef {import('../wallet-account-read-only-evm.js').EvmWalletConfig} EvmWalletConfig */
 /** @typedef {import('../wallet-account-read-only-evm.js').TypedData} TypedData */
 /** @typedef {import('@tetherto/wdk-wallet').KeyPair} KeyPair */
 /** @typedef {import('ethers').AuthorizationRequest} AuthorizationRequest */
@@ -49,10 +48,12 @@ export type SeedSignerEvmOpts = {
  */
 export class ISignerEvm extends ISigner {
     /**
-     * Whether this signer was created from a standalone private key.
+     * Whether this signer can derive child signers (i.e. it holds an HD root). Non-derivable
+     * signers (e.g. private-key signers) are bound directly to an account; derivable signers
+     * derive child accounts and keep the root for management only.
      * @type {boolean}
      */
-    get isPrivateKey(): boolean;
+    get isDerivable(): boolean;
     /**
      * The last component index for the derivation path of this signer, when applicable.
      * @type {number|undefined}
@@ -77,11 +78,10 @@ export class ISignerEvm extends ISigner {
      * Derive a child signer from this signer using a relative path (e.g. "0'/0/0").
      *
      * @param {string} relPath - The relative BIP-44 path segment.
-     * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-     * @returns {ISignerEvm} The derived child signer.
+     * @returns {Promise<ISignerEvm>} The derived child signer.
      * @throws {SignerError} If the signer does not support derivation (e.g. private-key signers).
      */
-    derive(relPath: string, _cfg?: EvmWalletConfig): ISignerEvm;
+    derive(relPath: string): Promise<ISignerEvm>;
     /**
      * Returns the account's address.
      * @returns {Promise<string>}
@@ -145,7 +145,7 @@ export default class SeedSignerEvm extends ISignerEvm {
      * @private
      */
     private _root;
-    get isPrivateKey(): boolean;
+    get isDerivable(): boolean;
     get index(): number | undefined;
     get path(): string | undefined;
     get address(): any;
@@ -153,11 +153,10 @@ export default class SeedSignerEvm extends ISignerEvm {
     /**
      * Derive a child signer using the provided relative path (e.g. "0'/0/0").
      * @param {string} relPath
-     * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-     * @returns {SeedSignerEvm}
+     * @returns {Promise<SeedSignerEvm>}
      * @throws {Error} If called on a derived child signer, which does not retain the root.
      */
-    derive(relPath: string, _cfg?: EvmWalletConfig): SeedSignerEvm;
+    derive(relPath: string): Promise<SeedSignerEvm>;
     /**
      * Sign a plain message string.
      * @param {string} message
@@ -186,7 +185,6 @@ export default class SeedSignerEvm extends ISignerEvm {
     /** Disposes secrets from memory. */
     dispose(): void;
 }
-export type EvmWalletConfig = import("../wallet-account-read-only-evm.js").EvmWalletConfig;
 export type TypedData = import("../wallet-account-read-only-evm.js").TypedData;
 export type KeyPair = import("@tetherto/wdk-wallet").KeyPair;
 export type AuthorizationRequest = import("ethers").AuthorizationRequest;

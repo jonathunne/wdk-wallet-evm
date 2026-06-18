@@ -25,9 +25,9 @@ describe('WalletManagerEvm', () => {
   })
 
   describe('constructor', () => {
-    test('should throw if the default signer is a private key signer', () => {
+    test('should throw if the default signer is not derivable', () => {
       expect(() => new WalletManagerEvm(new PrivateKeySignerEvm(PRIVATE_KEY))) // eslint-disable-line no-new
-        .toThrow('Private key signers are not supported for wallet managers.')
+        .toThrow('The default signer must be derivable.')
     })
   })
 
@@ -86,6 +86,28 @@ describe('WalletManagerEvm', () => {
     test('should throw if the named signer does not exist (string overload)', async () => {
       await expect(wallet.getAccount('missing'))
         .rejects.toThrow('No signer registered with name "missing".')
+    })
+
+    test('should derive a detached account for a named derivable signer without handing out the root', async () => {
+      const named = new SeedSignerEvm(SEED_PHRASE)
+      wallet.addSigner('seed', named)
+
+      const account = await wallet.getAccount('seed')
+
+      expect(account).toBeInstanceOf(WalletAccountEvm)
+      expect(account.path).toBe("m/44'/60'/0'/0/0")
+
+      // Disposing the account must not neuter the registered root.
+      account.dispose()
+      await expect(named.derive("0'/0/1")).resolves.toBeInstanceOf(SeedSignerEvm)
+    })
+
+    test('should mirror the registered signer\'s own (non-default) path', async () => {
+      wallet.addSigner('atFive', new SeedSignerEvm(SEED_PHRASE, { path: "0'/0/5" }))
+
+      const account = await wallet.getAccount('atFive')
+
+      expect(account.path).toBe("m/44'/60'/0'/0/5")
     })
   })
 

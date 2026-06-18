@@ -110,11 +110,11 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
    * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
    * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
    * @param {EvmWalletConfig} [config] - The configuration object.
-   * @returns {WalletAccountEvm}
+   * @returns {Promise<WalletAccountEvm>}
    */
-  static fromSeed (seed, path, config = {}) {
+  static async fromSeed (seed, path, config = {}) {
     const root = new SeedSignerEvm(seed)
-    const signer = root.derive(path)
+    const signer = await root.derive(path)
     // The derived child holds its own account key and does not retain the root
     root.dispose()
     return new WalletAccountEvm(signer, config)

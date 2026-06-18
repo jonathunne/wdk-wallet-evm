@@ -2,7 +2,6 @@ import { ISignerEvm } from "./seed-signer-evm.js";
 /**
  * @typedef {import("@ledgerhq/device-management-kit").DeviceManagementKit} DeviceManagementKit
  * @typedef {import("./seed-signer-evm.js").UnsignedEvmTransaction} UnsignedEvmTransaction
- * @typedef {import("../wallet-account-read-only-evm.js").EvmWalletConfig} EvmWalletConfig
  * @typedef {import("../wallet-account-read-only-evm.js").TypedData} TypedData
  * @typedef {import('@tetherto/wdk-wallet').KeyPair} KeyPair
  * @typedef {import('ethers').AuthorizationRequest} AuthorizationRequest
@@ -34,7 +33,7 @@ export default class LedgerSignerEvm extends ISignerEvm {
     /** @private */
     private _dmk;
     /** @type {boolean} */
-    get isPrivateKey(): boolean;
+    get isDerivable(): boolean;
     /** @type {number|undefined} */
     get index(): number | undefined;
     /** @type {string|undefined} */
@@ -75,10 +74,9 @@ export default class LedgerSignerEvm extends ISignerEvm {
      * Derive a new signer at the given relative path, reusing the current device session.
      *
      * @param {string} relPath - Relative BIP-44 path (e.g. "0'/0/1").
-     * @param {EvmWalletConfig} [_cfg] - Ignored for EVM signers; present for base compatibility.
-     * @returns {LedgerSignerEvm} A new hardware-backed signer bound to the derived path.
+     * @returns {Promise<LedgerSignerEvm>} A new hardware-backed signer bound to the derived path.
      */
-    derive(relPath: string, _cfg?: EvmWalletConfig): LedgerSignerEvm;
+    derive(relPath: string): Promise<LedgerSignerEvm>;
     /**
      * @returns {Promise<string>} The account's address.
      */
@@ -118,7 +116,6 @@ export default class LedgerSignerEvm extends ISignerEvm {
     /** Clear device handles and local state. @returns {void} */
     dispose(): void;
 }
-export type EvmWalletConfig = import("../wallet-account-read-only-evm.js").EvmWalletConfig;
 export type TypedData = import("../wallet-account-read-only-evm.js").TypedData;
 export type KeyPair = import("@tetherto/wdk-wallet").KeyPair;
 export type DeviceManagementKit = import("@ledgerhq/device-management-kit").DeviceManagementKit;

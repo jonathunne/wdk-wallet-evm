@@ -21,14 +21,14 @@ describe('SeedSignerEvm', () => {
       .toThrow('The seed phrase is invalid.')
   })
 
-  test('should throw if the path is invalid', () => {
-    expect(() => { new SeedSignerEvm(VALID_SEED_PHRASE).derive("a'/b/c") })
-      .toThrow('invalid path component')
+  test('should throw if the path is invalid', async () => {
+    await expect(new SeedSignerEvm(VALID_SEED_PHRASE).derive("a'/b/c"))
+      .rejects.toThrow('invalid path component')
   })
 
-  test('should throw if both seed and root are provided', () => {
+  test('should throw if both seed and root are provided', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
-    const child = root.derive("0'/0/0")
+    const child = await root.derive("0'/0/0")
     expect(() => { new SeedSignerEvm(VALID_SEED_PHRASE, { root: child }) }) // eslint-disable-line no-new
       .toThrow('Provide either a seed or a root, not both.')
     child.dispose()
@@ -38,7 +38,7 @@ describe('SeedSignerEvm', () => {
   test('should create a signer with the account at index 0 by default', () => {
     const signer = new SeedSignerEvm(VALID_SEED_PHRASE)
 
-    expect(signer.isPrivateKey).toBe(false)
+    expect(signer.isDerivable).toBe(true)
     expect(signer.address).toBe(EXPECTED_ADDRESS)
     expect(signer.path).toBe("m/44'/60'/0'/0/0")
     expect(signer.index).toBe(0)
@@ -46,10 +46,11 @@ describe('SeedSignerEvm', () => {
     signer.dispose()
   })
 
-  test('should derive a child signer with the correct address and path', () => {
+  test('should derive a child signer with the correct address and path', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
-    const child = root.derive("0'/0/0")
+    const child = await root.derive("0'/0/0")
 
+    expect(child.isDerivable).toBe(false)
     expect(child.address).toBe(EXPECTED_ADDRESS)
     expect(child.path).toBe("m/44'/60'/0'/0/0")
     expect(child.index).toBe(0)
@@ -60,9 +61,9 @@ describe('SeedSignerEvm', () => {
     root.dispose()
   })
 
-  test('should derive the same address from raw seed bytes', () => {
+  test('should derive the same address from raw seed bytes', async () => {
     const root = new SeedSignerEvm(VALID_SEED)
-    const child = root.derive("0'/0/0")
+    const child = await root.derive("0'/0/0")
 
     expect(child.address).toBe(EXPECTED_ADDRESS)
 
@@ -78,15 +79,15 @@ describe('SeedSignerEvm', () => {
     signer.dispose()
   })
 
-  test('should throw when deriving from a disposed signer', () => {
+  test('should throw when deriving from a disposed signer', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
     root.dispose()
 
-    expect(() => root.derive("0'/0/0")).toThrow('Cannot derive: this signer has no root')
+    await expect(root.derive("0'/0/0")).rejects.toThrow('Cannot derive: this signer has no root')
   })
 
   test('should return the correct signature', async () => {
-    const child = new SeedSignerEvm(VALID_SEED_PHRASE).derive("0'/0/0")
+    const child = await new SeedSignerEvm(VALID_SEED_PHRASE).derive("0'/0/0")
 
     const signature = await child.sign(MESSAGE)
     expect(signature).toBe(EXPECTED_SIGNATURE)
@@ -95,7 +96,7 @@ describe('SeedSignerEvm', () => {
   })
 
   test('should return the address via getAddress()', async () => {
-    const child = new SeedSignerEvm(VALID_SEED_PHRASE).derive("0'/0/0")
+    const child = await new SeedSignerEvm(VALID_SEED_PHRASE).derive("0'/0/0")
 
     const address = await child.getAddress()
     expect(address).toBe(EXPECTED_ADDRESS)
@@ -103,9 +104,9 @@ describe('SeedSignerEvm', () => {
     child.dispose()
   })
 
-  test('should clear secrets on dispose', () => {
+  test('should clear secrets on dispose', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
-    const child = root.derive("0'/0/0")
+    const child = await root.derive("0'/0/0")
 
     child.dispose()
 
@@ -114,8 +115,8 @@ describe('SeedSignerEvm', () => {
 
   test('should not neuter the shared root when a derived child is disposed', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
-    const a = root.derive("0'/0/0")
-    const b = root.derive("0'/0/1")
+    const a = await root.derive("0'/0/0")
+    const b = await root.derive("0'/0/1")
 
     const signature = await b.sign(MESSAGE)
 
@@ -123,17 +124,17 @@ describe('SeedSignerEvm', () => {
 
     // The sibling still signs and the root can still derive new children.
     await expect(b.sign(MESSAGE)).resolves.toBe(signature)
-    expect(() => root.derive("0'/0/2")).not.toThrow()
+    await expect(root.derive("0'/0/2")).resolves.toBeInstanceOf(SeedSignerEvm)
 
     b.dispose()
     root.dispose()
   })
 
-  test('should not let a derived child derive further', () => {
+  test('should not let a derived child derive further', async () => {
     const root = new SeedSignerEvm(VALID_SEED_PHRASE)
-    const child = root.derive("0'/0/0")
+    const child = await root.derive("0'/0/0")
 
-    expect(() => child.derive("0'/0/1")).toThrow('Cannot derive: this signer has no root')
+    await expect(child.derive("0'/0/1")).rejects.toThrow('Cannot derive: this signer has no root')
 
     child.dispose()
     root.dispose()
@@ -145,7 +146,7 @@ describe('PrivateKeySignerEvm', () => {
     const signer = new PrivateKeySignerEvm(VALID_PRIVATE_KEY)
 
     expect(signer.address).toBe(EXPECTED_ADDRESS)
-    expect(signer.isPrivateKey).toBe(true)
+    expect(signer.isDerivable).toBe(false)
     expect(signer.index).toBeUndefined()
 
     signer.dispose()
@@ -169,10 +170,10 @@ describe('PrivateKeySignerEvm', () => {
     signer.dispose()
   })
 
-  test('should throw when calling derive', () => {
+  test('should throw when calling derive', async () => {
     const signer = new PrivateKeySignerEvm(VALID_PRIVATE_KEY)
 
-    expect(() => signer.derive()).toThrow('PrivateKeySignerEvm does not support derivation.')
+    await expect(signer.derive()).rejects.toThrow('PrivateKeySignerEvm does not support derivation.')
 
     signer.dispose()
   })

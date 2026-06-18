@@ -80,7 +80,7 @@ describe('WalletAccountEvm', () => {
     await sendTestTokensTo(ACCOUNT.address, INITIAL_TOKEN_BALANCE)
 
     const root = new SeedSignerEvm(SEED_PHRASE)
-    const signer = root.derive("0'/0/0")
+    const signer = await root.derive("0'/0/0")
     account = new WalletAccountEvm(signer, { provider: hre.network.provider })
   })
 
@@ -150,7 +150,7 @@ describe('WalletAccountEvm', () => {
 
   describe('signTransaction', () => {
     test('should sign a transaction and return a valid hex string', async () => {
-      const accountWithoutProvider = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const accountWithoutProvider = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       const TRANSACTION = {
         to: '0xa460AEbce0d3A4BecAd8ccf9D6D4861296c503Bd',
@@ -262,7 +262,7 @@ describe('WalletAccountEvm', () => {
     })
 
     test('should throw if the account is not connected to a provider', async () => {
-      const account = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const account = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       await expect(account.sendTransaction({ }))
         .rejects.toThrow('The wallet must be connected to a provider to send transactions.')
@@ -335,7 +335,7 @@ describe('WalletAccountEvm', () => {
       }
 
       const account = new WalletAccountEvm(
-        new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"),
+        await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"),
         { provider: hre.network.provider, transferMaxFee: 0 }
       )
 
@@ -344,7 +344,7 @@ describe('WalletAccountEvm', () => {
     })
 
     test('should throw if the account is not connected to a provider', async () => {
-      const account = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const account = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       await expect(account.transfer({ }))
         .rejects.toThrow('The wallet must be connected to a provider to transfer tokens.')
@@ -440,7 +440,7 @@ describe('WalletAccountEvm', () => {
     })
 
     test('should throw if the account is not connected to a provider', async () => {
-      const accountWithoutProvider = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const accountWithoutProvider = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
       const approveOptions = {
         token: testToken.target,
         spender: SPENDER,
@@ -508,7 +508,7 @@ describe('WalletAccountEvm', () => {
     })
 
     test('should throw if the account is not connected to a provider', async () => {
-      const account = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const account = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       await expect(account.delegate(delegateContract.target))
         .rejects.toThrow('The wallet must be connected to a provider to delegate.')
@@ -542,7 +542,7 @@ describe('WalletAccountEvm', () => {
     })
 
     test('should throw if the account is not connected to a provider', async () => {
-      const account = new WalletAccountEvm(new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+      const account = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       await expect(account.revokeDelegation())
         .rejects.toThrow('The wallet must be connected to a provider to delegate.')
