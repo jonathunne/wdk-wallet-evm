@@ -167,7 +167,6 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
    * @throws {Error} If a provider is set, and the transaction's cost surpasses the transaction max. fee option.
    */
   async signTransaction (tx) {
-    
     if (this._provider && this._config.transactionMaxFee !== undefined) {
       const { fee } = await this.quoteSendTransaction(tx)
 

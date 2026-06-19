@@ -90,6 +90,25 @@ describe('WalletAccountEvm', () => {
     await hre.network.provider.send('hardhat_reset')
   })
 
+  describe('fromSeed', () => {
+    test('should create the account at the given path from a seed phrase', async () => {
+      const seededAccount = await WalletAccountEvm.fromSeed(SEED_PHRASE, "0'/0/0", {
+        provider: hre.network.provider
+      })
+
+      expect(await seededAccount.getAddress()).toBe(ACCOUNT.address)
+      expect(seededAccount.path).toBe(ACCOUNT.path)
+      expect(seededAccount.index).toBe(ACCOUNT.index)
+    })
+
+    test('should derive the same account as a manually derived signer', async () => {
+      const seededAccount = await WalletAccountEvm.fromSeed(SEED_PHRASE, "0'/0/0")
+      const signerAccount = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
+
+      expect(await seededAccount.getAddress()).toBe(await signerAccount.getAddress())
+    })
+  })
+
   describe('sign', () => {
     const MESSAGE = 'Dummy message to sign.'
 

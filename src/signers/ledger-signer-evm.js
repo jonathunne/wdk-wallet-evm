@@ -30,7 +30,6 @@ import { ISignerEvm } from './seed-signer-evm.js'
 /** @typedef {import('ethers').AuthorizationRequest} AuthorizationRequest */
 /** @typedef {import('ethers').Authorization} Authorization */
 /** @typedef {import('../wallet-account-read-only-evm.js').TypedData} TypedData */
-/** @typedef {import('rxjs').Observable} Observable */
 
 const BIP_44_ETH_DERIVATION_PATH_PREFIX = "44'/60'"
 
@@ -162,13 +161,7 @@ export default class LedgerSignerEvm extends ISignerEvm {
     }
   }
 
-  /**
-   * Ensure the device is in a usable state before sending actions.
-   * - If locked or busy: fail fast with a friendly error.
-   * - If not connected: attempt reconnect.
-   *
-   * @private
-   */
+  /** @private */
   async _ensureDeviceReady () {
     if (!this._dmk || !this._sessionId) return
     let state
@@ -193,14 +186,7 @@ export default class LedgerSignerEvm extends ISignerEvm {
     }
   }
 
-  /**
-   * Consume a DeviceAction observable and resolve on Completed; reject early on Error/Stopped.
-   *
-   * @template T
-   * @param {Observable<any>} observable
-   * @returns {Promise<T>}
-   * @private
-   */
+  /** @private */
   async _consumeDeviceAction (observable) {
     return await firstValueFrom(
       observable.pipe(

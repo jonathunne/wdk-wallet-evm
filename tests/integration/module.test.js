@@ -282,9 +282,14 @@ describe('@tetherto/wdk-wallet-evm', () => {
     for (const account of [account0, account1]) {
       expect(account.keyPair.privateKey).toBe(null)
 
-      await expect(account.sign(MESSAGE)).rejects.toThrow()
-      await expect(account.sendTransaction(TRANSACTION)).rejects.toThrow()
-      await expect(account.transfer(TRANSFER)).rejects.toThrow()
+      // Once disposed, the underlying signer is cleared, so any signing operation
+      // fails when it reaches the now-undefined signer rather than for some other reason.
+      await expect(account.sign(MESSAGE))
+        .rejects.toThrow(/Cannot read properties of undefined \(reading 'signMessage'\)/)
+      await expect(account.sendTransaction(TRANSACTION))
+        .rejects.toThrow(/Cannot read properties of undefined \(reading 'signTransaction'\)/)
+      await expect(account.transfer(TRANSFER))
+        .rejects.toThrow(/Cannot read properties of undefined \(reading 'signTransaction'\)/)
     }
   })
 

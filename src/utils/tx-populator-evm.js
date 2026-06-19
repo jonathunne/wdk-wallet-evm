@@ -15,24 +15,29 @@
 
 import { Signature, toQuantity } from 'ethers'
 
+/** @typedef {import('ethers').Provider} Provider */
+/** @typedef {import('ethers').AuthorizationLike} AuthorizationLike */
+
 /**
+ * A fully or partially specified EVM transaction, prior to signing.
+ *
  * @typedef {Object} UnsignedEvmTransaction
- * @property {number} chainId
- * @property {number} nonce
- * @property {string} from
- * @property {string|null} to
- * @property {string} data
- * @property {number|bigint} value
- * @property {number} type
- * @property {number|bigint} gasLimit
- * @property {number|bigint} [gasPrice]
- * @property {number|bigint} [maxFeePerGas]
- * @property {number|bigint} [maxPriorityFeePerGas]
- * @property {any[]} [accessList]
- * @property {number|bigint} [maxFeePerBlobGas]
- * @property {any[]} [blobs]
- * @property {string[]} [blobVersionedHashes]
- * @property {import('ethers').AuthorizationLike[]} [authorizationList]
+ * @property {number} chainId - The id of the chain the transaction targets.
+ * @property {number} nonce - The sender's transaction count, used to order transactions.
+ * @property {string} from - The sender's address.
+ * @property {string|null} to - The recipient's address, or null for contract creation.
+ * @property {string} data - The transaction's calldata as a hex string.
+ * @property {number|bigint} value - The amount of native currency (in wei) to transfer.
+ * @property {number} type - The EIP-2718 transaction type (0/1 legacy, 2 EIP-1559, 3 EIP-4844, 4 EIP-7702).
+ * @property {number|bigint} gasLimit - The maximum amount of gas the transaction may consume.
+ * @property {number|bigint} [gasPrice] - The gas price (in wei) for legacy (type 0/1) transactions.
+ * @property {number|bigint} [maxFeePerGas] - The maximum total fee (in wei) per gas for EIP-1559 transactions.
+ * @property {number|bigint} [maxPriorityFeePerGas] - The maximum priority fee (in wei) per gas for EIP-1559 transactions.
+ * @property {any[]} [accessList] - The EIP-2930 access list of addresses and storage keys.
+ * @property {number|bigint} [maxFeePerBlobGas] - The maximum fee (in wei) per blob gas for EIP-4844 transactions.
+ * @property {any[]} [blobs] - The blobs to include in an EIP-4844 transaction.
+ * @property {string[]} [blobVersionedHashes] - The versioned hashes of the EIP-4844 blobs.
+ * @property {AuthorizationLike[]} [authorizationList] - The EIP-7702 authorization tuples.
  */
 
 /**
@@ -42,7 +47,7 @@ import { Signature, toQuantity } from 'ethers'
  * explicitly supplied in `tx`. Supports legacy (type 0/1), EIP-1559 (type 2),
  * EIP-4844 (type 3) and EIP-7702 (type 4) transaction styles.
  *
- * @param {import('ethers').Provider} provider - An ethers-compatible JSON-RPC provider.
+ * @param {Provider} provider - An ethers-compatible JSON-RPC provider.
  * @param {string} from - The sender address.
  * @param {UnsignedEvmTransaction} tx - The partial transaction to populate.
  * @returns {Promise<UnsignedEvmTransaction>} The fully populated unsigned transaction.

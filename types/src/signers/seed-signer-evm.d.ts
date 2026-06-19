@@ -148,7 +148,7 @@ export default class SeedSignerEvm extends ISignerEvm {
     get isDerivable(): boolean;
     get index(): number | undefined;
     get path(): string | undefined;
-    get address(): any;
+    get address(): string;
     get keyPair(): KeyPair;
     /**
      * Derive a child signer using the provided relative path (e.g. "0'/0/0").

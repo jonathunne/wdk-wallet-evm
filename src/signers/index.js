@@ -18,5 +18,8 @@
  * - `SeedSignerEvm`: derives accounts from a BIP-39 seed (BIP-44 path).
  * - `PrivateKeySignerEvm`: memory-safe wrapper around a raw private key.
  */
+
+/** @typedef {import('../utils/tx-populator-evm.js').UnsignedEvmTransaction} UnsignedEvmTransaction */
+
 export { default, default as SeedSignerEvm } from './seed-signer-evm.js'
 export { default as PrivateKeySignerEvm } from './private-key-signer-evm.js'
