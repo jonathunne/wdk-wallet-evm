@@ -19,6 +19,7 @@ import { Contract, ZeroAddress } from 'ethers'
 import WalletAccountReadOnlyEvm from './wallet-account-read-only-evm.js'
 
 import SeedSignerEvm from './signers/seed-signer-evm.js'
+import PrivateKeySignerEvm from './signers/private-key-signer-evm.js'
 import { populateTransactionEvm } from './utils/tx-populator-evm.js'
 
 /** @typedef {import('./signers/seed-signer-evm.js').ISignerEvm} ISignerEvm */
@@ -117,6 +118,18 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
     const signer = await root.derive(path)
     // The derived child holds its own account key and does not retain the root
     root.dispose()
+    return new WalletAccountEvm(signer, config)
+  }
+
+  /**
+   * Creates a new evm wallet account from a raw private key.
+   *
+   * @param {string | Uint8Array} privateKey - The raw private key (hex string with or without 0x, or 32 bytes).
+   * @param {EvmWalletConfig} [config] - The configuration object.
+   * @returns {WalletAccountEvm} The wallet account.
+   */
+  static fromPrivateKey (privateKey, config = {}) {
+    const signer = new PrivateKeySignerEvm(privateKey)
     return new WalletAccountEvm(signer, config)
   }
 

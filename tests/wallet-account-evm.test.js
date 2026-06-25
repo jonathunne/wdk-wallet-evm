@@ -109,6 +109,19 @@ describe('WalletAccountEvm', () => {
     })
   })
 
+  describe('fromPrivateKey', () => {
+    test('should create the account from a raw private key', async () => {
+      const account = WalletAccountEvm.fromPrivateKey(ACCOUNT.keyPair.privateKey, {
+        provider: hre.network.provider
+      })
+
+      expect(account).toBeInstanceOf(WalletAccountEvm)
+      expect(await account.getAddress()).toBe(ACCOUNT.address)
+
+      account.dispose()
+    })
+  })
+
   describe('sign', () => {
     const MESSAGE = 'Dummy message to sign.'
 

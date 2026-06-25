@@ -11,6 +11,14 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm implement
      */
     static fromSeed(seed: string | Uint8Array, path: string, config?: EvmWalletConfig): Promise<WalletAccountEvm>;
     /**
+     * Creates a new evm wallet account from a raw private key.
+     *
+     * @param {string | Uint8Array} privateKey - The raw private key (hex string with or without 0x, or 32 bytes).
+     * @param {EvmWalletConfig} [config] - The configuration object.
+     * @returns {WalletAccountEvm} The wallet account.
+     */
+    static fromPrivateKey(privateKey: string | Uint8Array, config?: EvmWalletConfig): WalletAccountEvm;
+    /**
      * Creates a new evm wallet account using a signer.
      *
      * @param {ISignerEvm} signer - A signer implementing the EVM signer interface.
