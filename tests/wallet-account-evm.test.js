@@ -301,6 +301,22 @@ describe('WalletAccountEvm', () => {
       expect(fee).toBe(EXPECTED_FEE)
     })
 
+    test('should deploy a contract when "to" is omitted', async () => {
+      const { hash } = await account.sendTransaction({
+        value: 0,
+        data: SimpleDelegateContract.bytecode
+      })
+
+      const receipt = await hre.ethers.provider.getTransactionReceipt(hash)
+
+      // A contract-creation transaction has no recipient and yields a contract address.
+      expect(receipt.to).toBeNull()
+      expect(receipt.contractAddress).toBeTruthy()
+
+      const code = await hre.ethers.provider.getCode(receipt.contractAddress)
+      expect(code).not.toBe('0x')
+    })
+
     test('should successfully send a transaction with an authorization list', async () => {
       const auth = await account.signAuthorization({
         address: DELEGATE_CONTRACT_ADDRESS
