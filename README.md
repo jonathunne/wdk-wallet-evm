@@ -40,9 +40,6 @@ import {
   SeedSignerEvm,
   PrivateKeySignerEvm,
 } from '@tetherto/wdk-wallet-evm/signers'
-
-// Ledger signer has a separate export (optional peer dependencies)
-import { LedgerSignerEvm } from '@tetherto/wdk-wallet-evm/signers/ledger'
 ```
 
 ### Create a Wallet Manager (seed-based)
@@ -80,27 +77,17 @@ const account0 = await wallet.getAccount(0)
 const readOnlyAccount = await account0.toReadOnlyAccount()
 ```
 
-### Single Account (no manager): Private key or Ledger
+### Single Account (no manager): Private key
 
 ```javascript
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 import { PrivateKeySignerEvm } from '@tetherto/wdk-wallet-evm/signers'
-import { LedgerSignerEvm } from '@tetherto/wdk-wallet-evm/signers/ledger'
 
 // From a raw private key (hex string or bytes)
 const pkSigner = new PrivateKeySignerEvm('0x0123...abcd')
 const pkAccount = new WalletAccountEvm(pkSigner, {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
 })
-
-// From a Ledger hardware wallet (browser environment, WebHID)
-// Requires optional peer dependencies:
-//   npm install @ledgerhq/device-management-kit @ledgerhq/device-signer-kit-ethereum @ledgerhq/device-transport-kit-web-hid rxjs
-const ledgerSigner = new LedgerSignerEvm('0\'/0/0')
-const ledgerAccount = new WalletAccountEvm(ledgerSigner, {
-  provider: window.ethereum,
-})
-await ledgerAccount.getAddress() // ensure connection and address resolution
 ```
 
 ### Managing Multiple Accounts (seed-based manager)
@@ -288,11 +275,10 @@ wallet.dispose()
 
 ## 🔐 Signers
 
-Signers provide the cryptographic primitives for accounts. There are three signer implementations:
+Signers provide the cryptographic primitives for accounts. There are two signer implementations:
 
 - **SeedSignerEvm (root + child)**: Derives accounts from a BIP-39 seed using the BIP-44 Ethereum path. Can act as a root (for `WalletManagerEvm`) and derive children (for `WalletAccountEvm`).
 - **PrivateKeySignerEvm (child only)**: Wraps a raw private key in a memory-safe buffer. Cannot derive. Use directly with `WalletAccountEvm`. Not supported by `WalletManagerEvm`.
-- **LedgerSignerEvm (child only)**: Hardware-backed signer using Ledger DMK + WebHID. Construct it at a specific relative path (e.g., `"0'/0/0"`) and use with `WalletAccountEvm`.
 
 Examples:
 
@@ -309,13 +295,6 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 import { PrivateKeySignerEvm } from '@tetherto/wdk-wallet-evm/signers'
 const signer = new PrivateKeySignerEvm('0x0123...')
 const account = new WalletAccountEvm(signer, { provider: 'https://...' })
-
-// Single account from a Ledger device (browser)
-import { LedgerSignerEvm } from '@tetherto/wdk-wallet-evm/signers/ledger'
-const ledgerSigner = new LedgerSignerEvm('0\'/0/0')
-const ledgerAccount = new WalletAccountEvm(ledgerSigner, {
-  provider: window.ethereum,
-})
 ```
 
 ## Key Capabilities
@@ -328,7 +307,7 @@ const ledgerAccount = new WalletAccountEvm(ledgerSigner, {
 - **Message Signing**: Sign and verify messages (EIP-191 and EIP-712)
 - **Fee Estimation**: Real-time network fee rates with normal/fast tiers
 - **Secure Memory Disposal**: Clear private keys from memory when done
-- **Signer Submodule**: Create your own signer from ISignerEvm, support for Seed and Ledger signers
+- **Signer Submodule**: Create your own signer from ISignerEvm, support for Seed and Private key signers
 - **EIP-7702 Delegation**: Delegate EOAs to smart contracts, sign authorizations, and send type 4 transactions
 
 ## Compatibility
