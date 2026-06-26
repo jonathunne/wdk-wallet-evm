@@ -138,12 +138,7 @@ export default class SeedSignerEvm extends ISignerEvm {
     private _address;
     /** @private */
     private _path;
-    /**
-     * The HD root node, retained only by root signers. A child built via `derive`
-     * uses its parent's root to derive its own account but does not keep it, so disposing
-     * a child only clears the child's own account and never touches the shared root.
-     * @private
-     */
+    /** @private */
     private _root;
     get isDerivable(): boolean;
     get index(): number | undefined;
