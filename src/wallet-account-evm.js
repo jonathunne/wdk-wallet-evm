@@ -217,8 +217,8 @@ export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
       const transaction = { from, to, value, data, gasLimit, gasPrice, maxFeePerGas, maxPriorityFeePerGas, type, nonce, chainId, authorizationList }
 
       const gas = transaction.authorizationList
-        ? await this._estimateGasWithAuthList({ from, ...transaction })
-        : await this._provider.estimateGas({ from, ...transaction })
+        ? await this._estimateGasWithAuthList(transaction)
+        : await this._provider.estimateGas(transaction)
 
       const fees = await this._provider.getFeeData()
 
