@@ -54,7 +54,7 @@ const DELEGATION_TX_GAS_LIMIT = 100_000
 export default class WalletAccountEvm extends WalletAccountReadOnlyEvm {
   /**
    * Creates a new evm wallet account from a BIP-39 seed, deriving the account's key at the
-   * given BIP-44 path. The account holds a detached child signer (the HD root is disposed).
+   * given BIP-44 path.
    *
    * @overload
    * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
