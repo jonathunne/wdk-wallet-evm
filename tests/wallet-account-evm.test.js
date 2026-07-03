@@ -4,6 +4,8 @@ import { ContractFactory, Contract } from 'ethers'
 
 import { afterEach, beforeEach, describe, expect, test, jest } from '@jest/globals'
 
+import * as bip39 from 'bip39'
+
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '../index.js'
 import SeedSignerEvm from '../src/signers/seed-signer-evm.js'
 import PrivateKeySignerEvm from '../src/signers/private-key-signer-evm.js'
@@ -90,9 +92,9 @@ describe('WalletAccountEvm', () => {
     await hre.network.provider.send('hardhat_reset')
   })
 
-  describe('fromSeed', () => {
+  describe('constructor (seed overload)', () => {
     test('should create the account at the given path from a seed phrase', async () => {
-      const seededAccount = await WalletAccountEvm.fromSeed(SEED_PHRASE, "0'/0/0", {
+      const seededAccount = new WalletAccountEvm(SEED_PHRASE, "0'/0/0", {
         provider: hre.network.provider
       })
 
@@ -101,11 +103,22 @@ describe('WalletAccountEvm', () => {
       expect(seededAccount.index).toBe(ACCOUNT.index)
     })
 
+    test('should create the account from seed bytes', async () => {
+      const seedBytes = bip39.mnemonicToSeedSync(SEED_PHRASE)
+      const seededAccount = new WalletAccountEvm(seedBytes, "0'/0/0")
+
+      expect(await seededAccount.getAddress()).toBe(ACCOUNT.address)
+    })
+
     test('should derive the same account as a manually derived signer', async () => {
-      const seededAccount = await WalletAccountEvm.fromSeed(SEED_PHRASE, "0'/0/0")
+      const seededAccount = new WalletAccountEvm(SEED_PHRASE, "0'/0/0")
       const signerAccount = new WalletAccountEvm(await new SeedSignerEvm(SEED_PHRASE).derive("0'/0/0"))
 
       expect(await seededAccount.getAddress()).toBe(await signerAccount.getAddress())
+    })
+
+    test('should throw if no derivation path is provided', () => {
+      expect(() => new WalletAccountEvm(SEED_PHRASE)).toThrow()
     })
   })
 
