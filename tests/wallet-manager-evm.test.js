@@ -234,5 +234,31 @@ describe('WalletManagerEvm', () => {
       await expect(wallet.getFeeRates())
         .rejects.toThrow('The wallet must be connected to a provider to get fee rates.')
     })
+
+    test('should throw if the provider does not return any fee data', async () => {
+      // A pre-EIP-1559 block (no baseFeePerGas) makes maxFeePerGas resolve to null, and the
+      // missing eth_gasPrice handler makes gasPrice resolve to null.
+      const legacyBlock = { ...DUMMY_BLOCK }
+      delete legacyBlock.baseFeePerGas
+
+      const handlers = {
+        eth_chainId: () => '0x1',
+        net_version: () => '1',
+        eth_getBlockByNumber: () => legacyBlock
+      }
+
+      const provider = {
+        request: jest.fn(async ({ method }) => {
+          const handler = handlers[method]
+          if (!handler) throw new Error(`Unexpected rpc method: ${method}`)
+          return handler()
+        })
+      }
+
+      const wallet = new WalletManagerEvm(new SeedSignerEvm(SEED_PHRASE), { provider })
+
+      await expect(wallet.getFeeRates())
+        .rejects.toThrow()
+    })
   })
 })
